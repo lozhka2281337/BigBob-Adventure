@@ -1,6 +1,47 @@
-# размеры экрана
+""" общие настройки """
 WIDTH, HEIGHT = 1280, 720 
 
 FPS = 60
 BLACK = (20, 20, 25)
+WHITE = (255, 255, 255)
 BLUE_WALL = (100, 150, 200)
+
+MAP_WIDTH = 3200  
+MAP_HEIGHT = 2400
+
+
+""" карта """
+TILE_SIZE = 40
+COLS = 80
+ROWS = 60
+ 
+
+""" игрок """
+PLAYER_SPEED = 300
+PLAYER_HP = 5
+PLAYER_SIZE = 32
+PLAYER_COLOR = (0, 255, 100)
+
+
+""" враги """
+ENEMY_SIZE = 32
+
+# скауты
+ENEMY_SCOUT_HP = 250
+ENEMY_SCOUT_COLOR = (255, 255, 0)
+
+# рядовые
+ENEMY_NORMAL_HP = 150
+ENEMY_NORMAL_COLOR = (255, 50, 50)
+
+
+""" айтемы """
+HEALTH_PACK_SIZE = 20
+HEALTH_PACK_COLOR = (255, 50, 50)
+
+
+""" пули """
+BULLET_SIZE = 10
+BULLET_SPEED = 600
+BULLET_COLOR = (255, 255, 0) 
+

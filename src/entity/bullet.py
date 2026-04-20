@@ -1,11 +1,13 @@
 import pygame
 
+from config import BULLET_COLOR, BULLET_SIZE, BULLET_SPEED
+
 class Bullet:
     def __init__(self, x, y, target_x, target_y):
         self.pos = pygame.math.Vector2(x, y)
-        self.rect = pygame.Rect(x, y, 10, 10)
-        self.speed = 600 
-        self.color = (255, 255, 0) 
+        self.rect = pygame.Rect(x, y, BULLET_SIZE, BULLET_SIZE)
+        self.speed = BULLET_SPEED 
+        self.color = BULLET_COLOR 
 
         direction = pygame.math.Vector2(target_x - x, target_y - y)
         if direction.magnitude() > 0:

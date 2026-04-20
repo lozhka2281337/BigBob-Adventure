@@ -2,7 +2,10 @@ import pygame
 import sys
 import random
 
-from config import *
+from config import (WIDTH, HEIGHT, FPS,
+                    MAP_HEIGHT, MAP_WIDTH,
+                    BLACK, BLUE_WALL)
+
 from entity.bullet import Bullet
 from entity.player import Player
 from entity.enemy import Enemy
@@ -21,12 +24,9 @@ def main():
 
     walls, spawn_x, spawn_y = dungeon.generate_dungeon()
 
-    MAP_WIDTH = 3200  
-    MAP_HEIGHT = 2400
     map_rect = pygame.Rect(0, 0, MAP_WIDTH, MAP_HEIGHT)
 
     player = Player(spawn_x, spawn_y)
-    player.health = 5
     
     bullets = []
     health_packs = []
