@@ -9,8 +9,14 @@ class Player:
         self.speed = PLAYER_SPEED
         self.color = PLAYER_COLOR
         self.health = PLAYER_HP
+        self.invulnerable_timer = 0
 
-    def update(self, dt: int, walls: list):
+    def update(self, dt: float, walls: list): 
+        
+        # добавил таймер для щита 
+        if self.invulnerable_timer > 0:
+            self.invulnerable_timer -= dt
+
         # отслеживание клавиш 
         keys = pygame.key.get_pressed()
         direction = pygame.math.Vector2(0, 0)
@@ -25,7 +31,7 @@ class Player:
             direction = direction.normalize()
 
         self.pos.x += direction.x * self.speed * dt
-        self.rect.x = round(self.pos.x)
+        self.rect.x = int(self.pos.x) # измененил round на git для х
 
         # обработка коллизий
         for wall in walls:
@@ -35,15 +41,22 @@ class Player:
                 self.pos.x = self.rect.x 
 
         self.pos.y += direction.y * self.speed * dt
-        self.rect.y = round(self.pos.y)
+        self.rect.y = int(self.pos.y) # сделай тоже самое только для y
         for wall in walls:
             if self.rect.colliderect(wall):
                 if direction.y > 0: self.rect.bottom = wall.top
                 elif direction.y < 0: self.rect.top = wall.bottom
                 self.pos.y = self.rect.y 
+                
+    # исправил int на float, теперь камера принимает точные дробные значения и дергания исчезли 
+    def draw(self, surface, cam_x: float, cam_y: float):
+        screen_x = int(self.pos.x - cam_x)
+        screen_y = int(self.pos.y - cam_y)
+        
+        pygame.draw.rect(surface, self.color, (screen_x, screen_y, self.rect.width, self.rect.height))
+        pygame.draw.rect(surface, (0, 0, 0), (screen_x + 6, screen_y + 8, 6, 6))
+        pygame.draw.rect(surface, (0, 0, 0), (screen_x + 20, screen_y + 8, 6, 6))
 
-    def draw(self, surface, cam_x: int, cam_y: int):
-        offset_rect = self.rect.move(-cam_x, -cam_y)
-        pygame.draw.rect(surface, self.color, offset_rect)
-        pygame.draw.rect(surface, (0, 0, 0), (offset_rect.x + 6, offset_rect.y + 8, 6, 6))
-        pygame.draw.rect(surface, (0, 0, 0), (offset_rect.x + 20, offset_rect.y + 8, 6, 6))
+        # работа над щитом
+        if self.invulnerable_timer > 0:
+            pygame.draw.circle(surface, (0, 255, 150), (screen_x + 16, screen_y + 16), 40, 3)

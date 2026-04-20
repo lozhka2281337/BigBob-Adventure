@@ -36,11 +36,13 @@ def main():
     pygame.time.set_timer(SPAWN_ENEMY_EVENT, 1000) 
 
     running = True
+    #камера теперь будет привязана к точным координатам позиции и зафиксировал время для плавной физики.
     while running:
-        dt = clock.tick(FPS) / 1000.0  
+        clock.tick(FPS)
+        dt = 1.0 / FPS  
 
-        camera_x = player.rect.centerx - WIDTH // 2
-        camera_y = player.rect.centery - HEIGHT // 2
+        camera_x = player.pos.x + 16 - WIDTH / 2
+        camera_y = player.pos.y + 16 - HEIGHT / 2
 
         # ОБРАБОТКА СОБЫТИЙ 
         for event in pygame.event.get():
@@ -86,18 +88,22 @@ def main():
         # ОБНОВЛЕНИЕ СОСТОЯНИЙ 
         player.update(dt, walls)
 
+        # добавил изменеия для щита 
         for enemy in enemies[:]:
             enemy.update(dt, player, walls)
             if enemy.rect.colliderect(player.rect):
-                player.health -= 1
-                enemies.remove(enemy)
-                if player.health <= 0:
-                    screen.fill((0, 0, 0))
-                    death_msg = font.render("GAME OVER", True, (255, 255, 255))
-                    screen.blit(death_msg, (WIDTH//2 - 100, HEIGHT//2))
-                    pygame.display.flip()
-                    pygame.time.wait(3000)
-                    running = False
+                
+                if player.invulnerable_timer <= 0:
+                    player.health -= 1
+                    player.invulnerable_timer = 3.0            
+                    if player.health <= 0:
+                        
+                        screen.fill((0, 0, 0))
+                        death_msg = font.render("GAME OVER", True, (255, 255, 255))
+                        screen.blit(death_msg, (WIDTH//2 - 100, HEIGHT//2))
+                        pygame.display.flip()
+                        pygame.time.wait(3000)
+                        running = False
 
         for bullet in bullets[:]:
             bullet.update(dt)
@@ -132,10 +138,10 @@ def main():
 
         # ОТРИСОВКА
         screen.fill(BLACK)
-        
+        # стены теперь тоже теперь отрисовываются с привязкой к зачетной камере. 
         for wall in walls:
-            screen_x = round(wall.x - camera_x)
-            screen_y = round(wall.y - camera_y)
+            screen_x = int(wall.x - camera_x)
+            screen_y = int(wall.y - camera_y)
             pygame.draw.rect(screen, BLUE_WALL, (screen_x, screen_y, wall.width, wall.height))
 
         for hp in health_packs:
