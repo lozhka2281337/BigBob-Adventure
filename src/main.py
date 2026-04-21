@@ -33,9 +33,11 @@ def main():
     enemies = []
 
     SPAWN_ENEMY_EVENT = pygame.USEREVENT + 1 
-    pygame.time.set_timer(SPAWN_ENEMY_EVENT, 1000) 
+    pygame.time.set_timer(SPAWN_ENEMY_EVENT, 1800) 
 
     running = True
+    last_shot_time = 0
+    shot_delay = 300
     #камера теперь будет привязана к точным координатам позиции и зафиксировал время для плавной физики.
     while running:
         clock.tick(FPS)
@@ -79,11 +81,17 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: 
-                    mouse_x, mouse_y = pygame.mouse.get_pos()
-                    world_mouse_x = mouse_x + camera_x
-                    world_mouse_y = mouse_y + camera_y
-                    new_bullet = Bullet(player.rect.centerx, player.rect.centery, world_mouse_x, world_mouse_y)
-                    bullets.append(new_bullet)
+                    # добавил проверку, прошло ли достаточно времени с прошлого выстрела
+                    current_time = pygame.time.get_ticks()
+                    if current_time - last_shot_time > shot_delay:
+                        mouse_x, mouse_y = pygame.mouse.get_pos()
+                        world_mouse_x = mouse_x + camera_x
+                        world_mouse_y = mouse_y + camera_y
+                        
+                        new_bullet = Bullet(player.pos.x + 16, player.pos.y + 16, world_mouse_x, world_mouse_y)
+                        bullets.append(new_bullet)
+                        
+                        last_shot_time = current_time
        
         # ОБНОВЛЕНИЕ СОСТОЯНИЙ 
         player.update(dt, walls)

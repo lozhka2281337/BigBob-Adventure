@@ -38,15 +38,16 @@ class Player:
             if self.rect.colliderect(wall):
                 if direction.x > 0: self.rect.right = wall.left
                 elif direction.x < 0: self.rect.left = wall.right
-                self.pos.x = self.rect.x 
+                self.pos.x = float(self.rect.x) 
 
+       
         self.pos.y += direction.y * self.speed * dt
         self.rect.y = int(self.pos.y) # сделай тоже самое только для y
         for wall in walls:
             if self.rect.colliderect(wall):
                 if direction.y > 0: self.rect.bottom = wall.top
-                elif direction.y < 0: self.rect.top = wall.bottom
-                self.pos.y = self.rect.y 
+                elif direction.y < 0: self.rect.top = wall.bottom         
+                self.pos.y = float(self.rect.y) 
                 
     # исправил int на float, теперь камера принимает точные дробные значения и дергания исчезли 
     def draw(self, surface, cam_x: float, cam_y: float):
@@ -59,4 +60,9 @@ class Player:
 
         # работа над щитом
         if self.invulnerable_timer > 0:
-            pygame.draw.circle(surface, (0, 255, 150), (screen_x + 16, screen_y + 16), 40, 3)
+            
+            import math
+            pulse = math.sin(pygame.time.get_ticks() * 0.01) * 5  
+            radius = 40 + int(pulse)
+            pygame.draw.circle(surface, (0, 255, 150), (screen_x + 16, screen_y + 16), radius, 3)
+            pygame.draw.circle(surface, (0, 255, 150), (screen_x + 16, screen_y + 16), radius + 4, 1)
