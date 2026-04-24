@@ -16,15 +16,22 @@ class Player:
 
         self.invulnerable_timer = 0 # таймер для щита бессмертия, появляющийся после получения урона
 
-        self.gun = Weapon(50, 20, 4, 5)
+        
+       
+        self.inventory = [
+            Weapon("Scanner", 50, 20, 10, 400, 800, (255, 255, 0)), # Обычный пистолет
+            Weapon("Firewall", 30, 20, 5, 1100, 550, (255, 100, 0), spread=15, count=5, b_range=280) # Дробовик
+        ]
+        
+        
+        self.current_weapon_idx = 0
 
-    def shot(self, camera_x: int, camera_y: int) -> Bullet:
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-
-        world_mouse_x = mouse_x + camera_x
-        world_mouse_y = mouse_y + camera_y
-
-        return Bullet(self.pos.x + 16, self.pos.y + 16, world_mouse_x, world_mouse_y)
+    
+    def shot(self, camera_x: int, camera_y: int) -> list:
+       
+        current_weapon = self.inventory[self.current_weapon_idx]
+       
+        return current_weapon.shot(self.pos, camera_x, camera_y)
         
     def get_damage(self):
         if self.invulnerable_timer <= 0: 

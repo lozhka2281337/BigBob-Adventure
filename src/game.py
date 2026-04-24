@@ -49,25 +49,46 @@ class Game:
                     self.running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: # 1 - лкм, 2 - колесо, 3 - пкм
-                    bullet = self.player.shot(camera_x, camera_y)
-                    self.bullets.append(bullet)
+                if event.button == 4:
+                    self.player.current_weapon_idx = (self.player.current_weapon_idx - 1) % len(self.player.inventory)
+                
+                if event.button == 5:
+                    self.player.current_weapon_idx = (self.player.current_weapon_idx + 1) % len(self.player.inventory)
+
+                if event.button == 1: 
+                    new_bullets = self.player.shot(camera_x, camera_y)
+                    if new_bullets:
+                        self.bullets.extend(new_bullets)
 
     def process_bullets(self):
-        for bullet in self.bullets:
-            for wall in self.walls:
-                if bullet.rect.colliderect(wall):
+        for bullet in self.bullets[:]:
+            
+            if hasattr(bullet, 'is_alive') and not bullet.is_alive:
+                if bullet in self.bullets:
                     self.bullets.remove(bullet)
-                    continue
-
-            if abs(bullet.pos.x) > MAP_WIDTH:
-                self.bullets.remove(bullet)
                 continue
 
-            for enemy in self.enemies:
-                if bullet.rect.colliderect(enemy.rect):
-                    self.enemies.remove(enemy)
+            hit_wall = False
+            for wall in self.walls:
+                if bullet.rect.colliderect(wall):
+                    if bullet in self.bullets:
+                        self.bullets.remove(bullet)
+                    hit_wall = True
+                    break
+            
+            if hit_wall: continue
+
+            if abs(bullet.pos.x) > MAP_WIDTH:
+                if bullet in self.bullets:
                     self.bullets.remove(bullet)
+                continue
+
+            for enemy in self.enemies[:]: 
+                if bullet.rect.colliderect(enemy.rect):
+                    if enemy in self.enemies:
+                        self.enemies.remove(enemy)
+                    if bullet in self.bullets:
+                        self.bullets.remove(bullet)
                     break
 
     def process_enemies(self):
@@ -94,6 +115,27 @@ class Game:
 
         if self.player.hp <= 1:
             pygame.draw.rect(self.screen, (255, 0, 0), (0, 0, WIDTH, HEIGHT), 5)
+
+    def draw_weapon_hud(self):
+        start_x = WIDTH - 220
+        start_y = HEIGHT - 80
+        
+        for i in range(len(self.player.inventory)):
+            weapon = self.player.inventory[i]
+            is_active = (i == self.player.current_weapon_idx)
+            
+ 
+            offset_y = (i - self.player.current_weapon_idx) * -35
+            
+            if is_active:
+                color = weapon.b_color
+                text_surf = self.FONT.render(f"> {weapon.name}", True, color)
+            else:
+                color = (120, 120, 120)
+                text_surf = self.FONT.render(weapon.name, True, color)
+                text_surf.set_alpha(150) 
+            
+            self.screen.blit(text_surf, (start_x, start_y + offset_y))
 
     """ три главные функции"""
 
@@ -135,6 +177,7 @@ class Game:
 
         """ интерфейс """
         self.draw_hp()
+        self.draw_weapon_hud() 
 
         pygame.display.flip()
 

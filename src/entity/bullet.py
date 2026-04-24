@@ -1,17 +1,27 @@
 import pygame
 
-from config import BULLET_COLOR, BULLET_SIZE, BULLET_SPEED
+from config import BULLET_SIZE
 
 class Bullet:
-    def __init__(self, x, y, target_x, target_y):
+    def __init__(self, x, y, target_x, target_y, speed, color, angle_offset=0, max_dist=None):
         self.pos = pygame.math.Vector2(x, y)
         self.rect = pygame.Rect(x, y, BULLET_SIZE, BULLET_SIZE)
-        self.speed = BULLET_SPEED 
-        self.color = BULLET_COLOR 
+        
+       
+        self.speed = speed
+        self.color = color
+
+       
+        self.max_dist = max_dist
+        self.start_pos = pygame.math.Vector2(x, y)
+        self.is_alive = True
 
         self.direction = pygame.math.Vector2(target_x - x, target_y - y)
         if self.direction.magnitude() > 0:
             self.direction = self.direction.normalize()
+            
+            if angle_offset != 0:
+                self.direction = self.direction.rotate(angle_offset)
         else:
             self.direction = pygame.math.Vector2(1, 0)
 
@@ -19,6 +29,11 @@ class Bullet:
         self.pos += self.direction * self.speed * dt
         self.rect.centerx = round(self.pos.x)
         self.rect.centery = round(self.pos.y)
+
+       
+        if self.max_dist:
+            if self.pos.distance_to(self.start_pos) > self.max_dist:
+                self.is_alive = False 
 
     def draw(self, surface, cam_x, cam_y):
         offset_rect = self.rect.move(-cam_x, -cam_y)
