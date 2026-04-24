@@ -83,8 +83,8 @@ class Player:
 
 
     def draw(self, surface: pygame.Surface, cam_x: float, cam_y: float):
-        screen_x = float(self.pos.x - cam_x)
-        screen_y = float(self.pos.y - cam_y)
+        screen_x = self.rect.x - cam_x
+        screen_y = self.rect.y - cam_y
         
         pygame.draw.rect(surface, self.color, (screen_x, screen_y, self.rect.width, self.rect.height))
         pygame.draw.rect(surface, (0, 0, 0), (screen_x + 6, screen_y + 8, 6, 6))

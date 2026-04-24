@@ -185,9 +185,14 @@ class Game:
         while self.running:
             dt = self.clock.tick(FPS) / 1000.0  
 
-            camera_x = self.player.pos.x + 16 - WIDTH / 2
-            camera_y = self.player.pos.y + 16 - HEIGHT / 2
-
+            camera_x = int(self.player.rect.x + 16 - WIDTH / 2)
+            camera_y = int(self.player.rect.y + 16 - HEIGHT / 2)
+            
             self.process_events(camera_x, camera_y)
+            
             self.update(dt)
+            
+            camera_x = int(self.player.rect.x + 16 - WIDTH / 2)
+            camera_y = int(self.player.rect.y + 16 - HEIGHT / 2)
+            
             self.draw(camera_x, camera_y)
