@@ -2,6 +2,7 @@ import pygame
 
 from entity.enemy import Enemy
 from entity.player import Player
+from entity.weapon import LaserWeapon 
 
 from config import (WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, 
                     SPAWN_ENEMY_EVENT, SPAWN_ENEMY_TIME, 
@@ -124,23 +125,37 @@ class Game:
             weapon = self.player.inventory[i]
             is_active = (i == self.player.current_weapon_idx)
             
- 
             offset_y = (i - self.player.current_weapon_idx) * -35
             
+            w_color = getattr(weapon, 'b_color', getattr(weapon, 'color', (255, 255, 255)))
+
             if is_active:
-                color = weapon.b_color
-                text_surf = self.FONT.render(f"> {weapon.name}", True, color)
+                text_surf = self.FONT.render(f"> {weapon.name}", True, w_color)
             else:
-                color = (120, 120, 120)
-                text_surf = self.FONT.render(weapon.name, True, color)
+                text_surf = self.FONT.render(weapon.name, True, (120, 120, 120))
                 text_surf.set_alpha(150) 
             
             self.screen.blit(text_surf, (start_x, start_y + offset_y))
+
+    def process_laser_damage(self):
+        weapon = self.player.inventory[self.player.current_weapon_idx]
+        
+        if isinstance(weapon, LaserWeapon) and weapon.is_firing:
+            start_pos = self.player.rect.center
+            
+            end_pos = (start_pos[0] + weapon.locked_dir.x * 1500, start_pos[1] + weapon.locked_dir.y * 1500)
+            
+            for enemy in self.enemies[:]:
+                if enemy.rect.clipline(start_pos, end_pos):
+                    self.enemies.remove(enemy)
 
     """ три главные функции"""
 
     def update(self, dt: float):
         self.player.update(dt, self.walls)
+
+        for weapon in self.player.inventory:
+            weapon.update()
 
         for bullet in self.bullets:
             bullet.update(dt)
@@ -150,6 +165,8 @@ class Game:
 
         self.process_bullets()
         self.process_enemies()
+        
+        self.process_laser_damage()
 
     def draw(self, camera_x, camera_y):
         self.screen.fill("purple")
@@ -163,6 +180,22 @@ class Game:
         """ ентити """
         self.player.draw(self.screen, camera_x, camera_y)
         
+        weapon = self.player.inventory[self.player.current_weapon_idx]
+        if isinstance(weapon, LaserWeapon):
+            start_p = (self.player.rect.centerx - camera_x, self.player.rect.centery - camera_y)
+            
+            if weapon.is_charging:
+                import math 
+                pulse = math.sin(pygame.time.get_ticks() * 0.03) * 5
+                radius = int(8 + pulse)
+                pygame.draw.circle(self.screen, weapon.color, start_p, radius)
+                pygame.draw.circle(self.screen, (255, 255, 255), start_p, max(1, radius - 4))
+                
+            elif weapon.is_firing:
+                end_p = (start_p[0] + weapon.locked_dir.x * 1500, start_p[1] + weapon.locked_dir.y * 1500)
+                pygame.draw.line(self.screen, weapon.color, start_p, end_p, weapon.beam_width)
+                pygame.draw.line(self.screen, (255, 255, 255), start_p, end_p, max(1, weapon.beam_width // 3))
+
         for bullet in self.bullets: 
             bullet.draw(self.screen, camera_x, camera_y)
         

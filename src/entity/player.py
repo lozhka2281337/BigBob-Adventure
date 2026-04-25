@@ -2,7 +2,7 @@ import pygame
 import math
 
 from .bullet import Bullet
-from .weapon import Weapon
+from .weapon import GunWeapon, LaserWeapon
 
 from config import PLAYER_SPEED, PLAYER_HP, PLAYER_SIZE, PLAYER_COLOR
 
@@ -17,10 +17,10 @@ class Player:
         self.invulnerable_timer = 0 # таймер для щита бессмертия, появляющийся после получения урона
 
         
-       
         self.inventory = [
-            Weapon("Scanner", 50, 20, 10, 400, 800, (255, 255, 0)), # Обычный пистолет
-            Weapon("Firewall", 30, 20, 5, 1100, 550, (255, 100, 0), spread=15, count=5, b_range=280) # Дробовик
+            GunWeapon("Scanner", 50, 20, 10, 400, 800, (255, 255, 0)), 
+            GunWeapon("Firewall", 30, 20, 5, 1100, 550, (255, 100, 0), spread=15, count=5, b_range=280), 
+            LaserWeapon("Defrag", 100, 20, 1, 2500, duration=800, beam_width=14, color=(0, 255, 255), charge_time=400)
         ]
         
         
@@ -28,9 +28,9 @@ class Player:
 
     
     def shot(self, camera_x: int, camera_y: int) -> list:
-       
+        
         current_weapon = self.inventory[self.current_weapon_idx]
-       
+        
         return current_weapon.shot(self.pos, camera_x, camera_y)
         
     def get_damage(self):
@@ -48,7 +48,13 @@ class Player:
         if direction.magnitude() > 0:
             direction = direction.normalize()
 
-        self.pos.x += direction.x * self.speed * dt
+        current_weapon = self.inventory[self.current_weapon_idx]
+        current_speed = self.speed
+        
+        if getattr(current_weapon, 'is_firing', False) or getattr(current_weapon, 'is_charging', False):
+            current_speed = self.speed * 0.2
+
+        self.pos.x += direction.x * current_speed * dt
         self.rect.x = int(self.pos.x)
 
         for wall in walls:
@@ -57,7 +63,7 @@ class Player:
                 elif direction.x < 0: self.rect.left = wall.right
                 self.pos.x = float(self.rect.x) 
 
-        self.pos.y += direction.y * self.speed * dt
+        self.pos.y += direction.y * current_speed * dt
         self.rect.y = int(self.pos.y) 
 
         for wall in walls:
