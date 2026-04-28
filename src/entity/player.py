@@ -19,7 +19,7 @@ class Player:
         
         self.inventory = [
             GunWeapon("Scanner", 50, 20, 10, 400, 800, (255, 255, 0)), 
-            GunWeapon("Firewall", 30, 20, 5, 1100, 550, (255, 100, 0), spread=15, count=5, b_range=280), 
+            GunWeapon("Firewall", 50, 20, 5, 1100, 550, (255, 100, 0), spread=15, count=5, b_range=280), 
             LaserWeapon("Defrag", 100, 20, 1, 2500, duration=800, beam_width=14, color=(0, 255, 255), charge_time=400)
         ]
         

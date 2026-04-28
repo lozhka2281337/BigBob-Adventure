@@ -1,7 +1,7 @@
 import pygame
 
 """ общие настройки """
-WIDTH, HEIGHT = 1280, 720 
+SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720 
 
 FPS = 60
 BLACK = (20, 20, 25)
@@ -52,6 +52,4 @@ BULLET_SIZE = 10
 BULLET_SPEED = 800
 BULLET_COLOR = (255, 255, 0) 
 
-
-""" шрифты"""
 
