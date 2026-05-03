@@ -18,8 +18,6 @@ class Renderer:
         self.enemies = enemies
 
         self.FONT = pygame.font.SysFont("Arial", 32, bold=True)
-        
-        # ИСПРАВЛЕНО 1: Добавил прозрачность (SRCALPHA), чтобы фон не был черным
         self.map_surface = pygame.Surface((MAP_W * TILE_SIZE, MAP_H * TILE_SIZE), pygame.SRCALPHA)
 
         self.init_map_surface()

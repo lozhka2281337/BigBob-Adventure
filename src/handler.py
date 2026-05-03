@@ -2,7 +2,7 @@ import pygame
 import math
 
 from entity.weapon import LaserWeapon, MeleeWeapon
-from entity.bullet import SparkEffect 
+from entity.bullet import Bullet, Grenade, SparkEffect 
 
 from config import MAP_WIDTH
 
@@ -35,76 +35,82 @@ class Handler:
                         self.bullets.extend(new_bullets)
 
     def process_bullets(self, game): 
-        for bullet in self.bullets[:]:
+        """Главный метод-диспетчер."""
+        self._process_effects()
+        self._process_grenades()
+        self._process_standard_bullets(game)
 
-            if getattr(bullet, 'is_effect', False):
-                if not bullet.is_alive:
-                    if bullet in self.bullets:
-                        self.bullets.remove(bullet)
-                continue
+    def _process_effects(self):
+        """Отвечает за искры."""
+        for effect in self.bullets[:]:
+            if isinstance(effect, SparkEffect):
+                if not effect.is_alive:
+                    if effect in self.bullets:
+                        self.bullets.remove(effect)
 
-            if hasattr(bullet, 'exploded'):
-                if bullet.exploded:
+    def _process_grenades(self):
+        """Отвечает за гранаты."""
+        for grenade in self.bullets[:]:
+            if isinstance(grenade, Grenade):
+                if grenade.exploded:
                     for _ in range(5): 
-                        self.bullets.append(SparkEffect(bullet.rect.centerx, bullet.rect.centery, (255, 100, 50)))
-
+                        self.bullets.append(SparkEffect(grenade.rect.centerx, grenade.rect.centery, (255, 100, 50)))
                     for enemy in self.enemies[:]:
                         enemy_pos = pygame.math.Vector2(enemy.rect.center)
-                        if bullet.pos.distance_to(enemy_pos) <= bullet.blast_radius:
+                        if grenade.pos.distance_to(enemy_pos) <= grenade.blast_radius:
                             if enemy in self.enemies:
                                 enemy.get_damage(200) 
                                 if enemy.hp <= 0: self.enemies.remove(enemy)
-                    
+                    if grenade in self.bullets:
+                        self.bullets.remove(grenade)
+                    continue
+                for wall in self.walls:
+                    if grenade.rect.colliderect(wall):
+                        grenade.is_moving = False
+                        break
+
+    def _process_standard_bullets(self, game):
+        """Отвечает за обычные пули (игрока и врагов)."""
+        for bullet in self.bullets[:]:
+            if type(bullet) is Bullet:                
+                if (hasattr(bullet, 'is_alive') and not bullet.is_alive) or abs(bullet.pos.x) > MAP_WIDTH * 40: 
                     if bullet in self.bullets:
                         self.bullets.remove(bullet)
-                continue
+                    continue
 
-            if hasattr(bullet, 'is_alive') and not bullet.is_alive:
-                if bullet in self.bullets:
-                    self.bullets.remove(bullet)
-                continue
-
-            hit_wall = False
-            for wall in self.walls:
-                if bullet.rect.colliderect(wall):
-                    if hasattr(bullet, 'exploded'):
-                        bullet.is_moving = False
-                    else:
+                # Столкновение со стенами
+                hit_wall = False
+                for wall in self.walls:
+                    if bullet.rect.colliderect(wall):
                         if bullet in self.bullets:
                             self.bullets.append(SparkEffect(bullet.rect.centerx, bullet.rect.centery, bullet.color))
                             self.bullets.remove(bullet)
                         hit_wall = True
-                    break
-            
-            if hit_wall: continue
+                        break
+                
+                if hit_wall: continue
 
-            if abs(bullet.pos.x) > MAP_WIDTH * 40: 
-                if bullet in self.bullets:
-                    self.bullets.remove(bullet)
-                continue
-
-            if getattr(bullet, 'is_enemy_bullet', False):
-                if bullet.rect.colliderect(self.player.rect):
-                    damage = getattr(bullet, 'damage', 1)
-                    self.player.get_damage(damage)
-                    if self.player.hp <= 0: game.death_player()
-                    
-                    if bullet in self.bullets:
-                        self.bullets.append(SparkEffect(bullet.rect.centerx, bullet.rect.centery, bullet.color))
-                        self.bullets.remove(bullet)
-            else:
-                for enemy in self.enemies[:]: 
-                    if bullet.rect.colliderect(enemy.rect):
-                        if hasattr(bullet, 'exploded'):
-                            bullet.is_moving = False
-                        else:
-                            enemy.get_damage(bullet.damage if hasattr(bullet, 'damage') else 50)
+                # 3. Нанесение урона, вражеские пули.
+                if getattr(bullet, 'is_enemy_bullet', False):
+                    if bullet.rect.colliderect(self.player.rect):
+                        damage = getattr(bullet, 'damage', 1)
+                        self.player.get_damage(damage)
+                        if self.player.hp <= 0: game.death_player()
+                        
+                        if bullet in self.bullets:
+                            self.bullets.append(SparkEffect(bullet.rect.centerx, bullet.rect.centery, bullet.color))
+                            self.bullets.remove(bullet)
+                else:
+                    # Пули игрока
+                    for enemy in self.enemies[:]: 
+                        if bullet.rect.colliderect(enemy.rect):
+                            enemy.get_damage(bullet.damage)
                             if enemy.hp <= 0: self.enemies.remove(enemy)
                             
                             if bullet in self.bullets:
                                 self.bullets.append(SparkEffect(bullet.rect.centerx, bullet.rect.centery, bullet.color))
                                 self.bullets.remove(bullet)
-                        break
+                            break
 
     def process_player_damage(self, game):
         for enemy in self.enemies:
@@ -117,7 +123,7 @@ class Handler:
                 if enemy_pos.distance_to(player_pos) <= enemy.attack_range:
                     self.player.get_damage(damage) 
                     if self.player.hp <= 0: game.death_player()
-            elif not hasattr(enemy, 'shoot_cooldown'):
+            elif not hasattr(enemy, 'shoot_cooldown'): 
                 if enemy.rect.colliderect(self.player.rect):
                     self.player.get_damage(damage) 
                     if self.player.hp <= 0: game.death_player()

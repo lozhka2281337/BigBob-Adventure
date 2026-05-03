@@ -32,32 +32,34 @@ class Shooter(Enemy):
         self.last_shot_time = 0
         self.shoot_cooldown = 1500 
 
+    # Принимаем пули 
     def update(self, dt: float, player, walls: list[pygame.Rect], bullets: list = None) -> None: 
         sees_player = self.check_los(player.rect, walls)
         direction = pygame.math.Vector2(0, 0)
-
         if sees_player: 
             vec_to_player = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, 
                                                 player.rect.centery - self.rect.centery)
             dist = vec_to_player.magnitude()
-
+            # Отвечает за дистанцию
             if dist > self.attack_range + 50:
                 direction = vec_to_player
             elif dist < self.attack_range - 50:
                 direction = -vec_to_player
             else:
-                direction = pygame.math.Vector2(0, 0) # Останавливаемся для выстрела
+                direction = pygame.math.Vector2(0, 0) 
                 current_time = pygame.time.get_ticks()
                 
+                # Что-то типо предохранителя
                 if current_time - self.last_shot_time >= self.shoot_cooldown and bullets is not None:
                     self.last_shot_time = current_time
-                    self._shoot(player, bullets)
+                    self._shoot(player, bullets)     
 
         if direction.magnitude() > 0:
             direction = direction.normalize()
         self.move(walls, dt, direction)
         
     def _shoot(self, player, bullets: list) -> None:
+        # Сборка пули
         new_bullet = Bullet(self.rect.centerx, self.rect.centery, 
                             player.rect.centerx, player.rect.centery, 
                             400, (255, 50, 50), self.damage)
