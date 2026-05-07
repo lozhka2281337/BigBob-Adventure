@@ -68,3 +68,18 @@ BULLET_SPEED = 800
 BULLET_COLOR = (255, 255, 0) 
 
 
+""" патроны и перезарядка """
+# Пистолет (Scanner)
+PISTOL_MAGAZINE_SIZE = 20
+PISTOL_RESERVE_AMMO = 60  # запас патронов
+PISTOL_RELOAD_TIME = 1.5  # секунды
+
+# Дробовик (Firewall)
+SHOTGUN_MAGAZINE_SIZE = 5
+SHOTGUN_RESERVE_AMMO = 30
+SHOTGUN_RELOAD_TIME = 2.0
+
+SHOTGUN_SHOT_DELAY = 500  # миллисекунды
+
+# Общая задержка выстрела для пистолета (если не указана в оружии)
+PISTOL_SHOT_DELAY = 300  # миллисекунды
