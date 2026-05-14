@@ -82,8 +82,7 @@ class Game:
 
         self.handler.process_elements(self)
         self.handler.process_player_damage(self)
-        self.handler.process_laser_damage()
-        self.handler.process_melee_damage()
+        self.player.process_weapon_damage(self.world.enemies, self.world.walls)
 
     """ главная функция """
 

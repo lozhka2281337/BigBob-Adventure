@@ -1,10 +1,8 @@
 import pygame
 import math
 
-from entity.weapon import LaserWeapon, MeleeWeapon
-from entity.bullet import Bullet, Grenade, SparkEffect 
-
-from config import MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, ZIP_BOMB, SCANNER, FIREWALL, DEFRAG, MELEE
+from entity.bullet import SparkEffect 
+from config import MAP_WIDTH, MAP_HEIGHT, TILE_SIZE
 
 class Handler:
     def __init__(self, player, world):
@@ -31,18 +29,8 @@ class Handler:
                     self.player.current_weapon_idx = (self.player.current_weapon_idx - 1) % len(self.player.inventory)
                 if event.button == 5:
                     self.player.current_weapon_idx = (self.player.current_weapon_idx + 1) % len(self.player.inventory)
-
-                # выстрел
                 if event.button == 1: 
-                    new_elements = self.player.shot(camera_x, camera_y)
-                    if new_elements: self.create_new_elements(new_elements)
-
-    def create_new_elements(self, new_elements: list):
-        inventory = self.player.inventory
-        weapon = inventory[self.player.current_weapon_idx]
-        
-        if weapon.name == SCANNER or weapon.name == FIREWALL: self.bullets.extend(new_elements)
-        elif weapon.name == ZIP_BOMB: self.grenades.extend(new_elements)
+                    self.player.shot(camera_x, camera_y, game.world)
 
     def process_elements(self, game): 
         """Главный метод-диспетчер."""
@@ -73,7 +61,11 @@ class Handler:
         for enemy in self.enemies[:]:
             enemy_pos = pygame.math.Vector2(enemy.rect.center)
             if grenade.pos.distance_to(enemy_pos) <= grenade.blast_radius:
-                enemy.get_damage(200) 
+                enemy.get_damage(200)                
+                push_dir = enemy_pos - grenade.pos
+                if push_dir.magnitude() > 0:
+                    enemy.knockback += push_dir.normalize() * 1500
+                
                 if enemy.hp <= 0: self.enemies.remove(enemy)
     
         self.grenades.remove(grenade)
@@ -91,7 +83,7 @@ class Handler:
                     self.bullets.remove(bullet)
                     break
 
-            if bullet not in self.bullets: continue    
+            if bullet not in self.bullets: continue   
 
             if bullet.player_bullet: self._procces_hit_player_bullet(bullet)
             else: self._procces_hit_enemy_bullet(game, bullet)
@@ -99,7 +91,10 @@ class Handler:
     def _procces_hit_player_bullet(self, bullet):
         for enemy in self.enemies[:]: 
             if bullet.rect.colliderect(enemy.rect):
-                enemy.get_damage(bullet.damage)
+                enemy.get_damage(bullet.damage)              
+                push_dir = pygame.math.Vector2(bullet.direction.x, bullet.direction.y)
+                if push_dir.magnitude() > 0:
+                    enemy.knockback += push_dir.normalize() * 250              
                 if enemy.hp <= 0: self.enemies.remove(enemy)
                 
                 if bullet in self.bullets:
@@ -123,58 +118,3 @@ class Handler:
             if enemy.rect.colliderect(self.player.rect):
                 self.player.get_damage(damage) 
                 if self.player.hp <= 0: game.death_player()
-
-    def get_laser_end_pos(self, weapon):
-        start_pos = self.player.rect.center
-        max_end = pygame.math.Vector2(
-            start_pos[0] + weapon.locked_dir.x * 1500, 
-            start_pos[1] + weapon.locked_dir.y * 1500
-        )
-        final_point = max_end
-        min_dist = 1500
-        start_v = pygame.math.Vector2(start_pos)
-
-        for wall in self.walls:
-            intersect = wall.clipline(start_pos, max_end)
-            if intersect:
-                hit_point = pygame.math.Vector2(intersect[0])
-                dist = start_v.distance_to(hit_point)
-                if dist < min_dist:
-                    min_dist = dist
-                    final_point = hit_point
-        return final_point
-
-    def process_laser_damage(self):
-        weapon = self.player.inventory[self.player.current_weapon_idx]
-        if weapon.name == DEFRAG and weapon.is_firing:
-            start_pos = self.player.rect.center
-            end_pos = self.get_laser_end_pos(weapon)
-
-            for enemy in self.enemies[:]:
-                if enemy.rect.clipline(start_pos, end_pos):
-                    enemy.get_damage(weapon.damage) 
-                    if enemy.hp <= 0: self.enemies.remove(enemy)
-
-    def process_melee_damage(self):
-        weapon = self.player.inventory[self.player.current_weapon_idx]
-
-        if weapon.name == MELEE and weapon.is_swinging:
-            start_pos = pygame.math.Vector2(self.player.rect.center)
-
-            for enemy in self.enemies[:]:
-                if enemy in weapon.hit_enemies: continue
-                
-                enemy_pos = pygame.math.Vector2(enemy.rect.center)
-                dist = start_pos.distance_to(enemy_pos)
-                
-                if dist <= weapon.reach + 16:
-                    dx = enemy_pos.x - start_pos.x
-                    dy = enemy_pos.y - start_pos.y
-                    
-                    angle_to_enemy = math.degrees(math.atan2(dy, dx))
-                    angle_diff = (angle_to_enemy - weapon.locked_angle + 180) % 360 - 180
-                    
-                    if abs(angle_diff) <= weapon.arc_degrees / 2:
-                        enemy.get_damage(150)
-                        if enemy.hp <= 0: self.enemies.remove(enemy)
-                        weapon.hit_enemies.append(enemy)

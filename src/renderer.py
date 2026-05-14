@@ -73,26 +73,6 @@ class Renderer:
             
             self.screen.blit(text_surf, (start_x, start_y + offset_y))
 
-    def get_laser_end_pos(self, weapon):
-        start_pos = self.player.rect.center
-        max_end = pygame.math.Vector2(
-            start_pos[0] + weapon.locked_dir.x * 1500, 
-            start_pos[1] + weapon.locked_dir.y * 1500
-        )
-        final_point = max_end
-        min_dist = 1500
-        start_v = pygame.math.Vector2(start_pos)
-
-        for wall in self.walls:
-            intersect = wall.clipline(start_pos, max_end)
-            if intersect:
-                hit_point = pygame.math.Vector2(intersect[0])
-                dist = start_v.distance_to(hit_point)
-                if dist < min_dist:
-                    min_dist = dist
-                    final_point = hit_point
-        return final_point
-
     def draw_laser(self, weapon, camera_x, camera_y):
         start_p = (self.player.rect.centerx - camera_x, self.player.rect.centery - camera_y)
             
@@ -103,7 +83,7 @@ class Renderer:
             pygame.draw.circle(self.screen, (255, 255, 255), start_p, max(1, radius - 4))
             
         elif weapon.is_firing:
-            world_end = self.get_laser_end_pos(weapon)
+            world_end = weapon.get_laser_end_pos(self.player.rect.center, self.walls)
             end_p = (world_end.x - camera_x, world_end.y - camera_y)
 
             pygame.draw.line(self.screen, weapon.color, start_p, end_p, weapon.beam_width)
@@ -142,7 +122,6 @@ class Renderer:
         weapon = self.player.inventory[self.player.current_weapon_idx]
         if weapon.name == DEFRAG: self.draw_laser(weapon, camera_x, camera_y)
         elif weapon.name == MELEE and weapon.is_swinging: self.draw_melee(weapon, camera_x, camera_y)
-
 
     def draw(self, camera_x, camera_y):
         """ карта """

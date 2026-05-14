@@ -26,10 +26,13 @@ class Player:
         
         self.current_weapon_idx = 0
     
-    def shot(self, camera_x: int, camera_y: int) -> list:
+    def shot(self, camera_x: int, camera_y: int, world) -> None:
         current_weapon = self.inventory[self.current_weapon_idx]
-        
-        return current_weapon.shot(self.pos, camera_x, camera_y)
+        current_weapon.shot(self.pos, camera_x, camera_y, world)
+
+    def process_weapon_damage(self, enemies, walls) -> None:
+        current_weapon = self.inventory[self.current_weapon_idx]
+        current_weapon.process_damage(enemies, self.rect, walls)
         
     def get_damage(self, damage=1):
         if self.invulnerable_timer <= 0: 

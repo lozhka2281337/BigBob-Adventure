@@ -10,24 +10,36 @@ class Enemy:
         self.speed = speed
         self.color = color
 
+        self.knockback = pygame.math.Vector2(0, 0)
+
     def move(self, walls: list[pygame.Rect], dt: float, direction: pygame.math.Vector2) -> None:
-        self.pos.x += direction.x * self.speed * dt
+        velocity_x = direction.x * self.speed + self.knockback.x
+        velocity_y = direction.y * self.speed + self.knockback.y
+
+        self.pos.x += velocity_x * dt
         self.rect.x = round(self.pos.x)
 
         for wall in walls:
             if self.rect.colliderect(wall):
-                if direction.x > 0: self.rect.right = wall.left
-                elif direction.x < 0: self.rect.left = wall.right
+                if velocity_x > 0: self.rect.right = wall.left
+                elif velocity_x < 0: self.rect.left = wall.right
                 self.pos.x = float(self.rect.x)
+                self.knockback.x = 0 
 
-        self.pos.y += direction.y * self.speed * dt
+        self.pos.y += velocity_y * dt
         self.rect.y = round(self.pos.y)
         
         for wall in walls:
             if self.rect.colliderect(wall):
-                if direction.y > 0: self.rect.bottom = wall.top
-                elif direction.y < 0: self.rect.top = wall.bottom
+                if velocity_y > 0: self.rect.bottom = wall.top
+                elif velocity_y < 0: self.rect.top = wall.bottom
                 self.pos.y = float(self.rect.y)
+                self.knockback.y = 0
+
+        if self.knockback.magnitude() > 10:
+            self.knockback = self.knockback.lerp(pygame.math.Vector2(0, 0), dt * 10)
+        else:
+            self.knockback.x, self.knockback.y = 0, 0
 
     def get_damage(self, damage: int) -> None:
         self.hp -= damage
