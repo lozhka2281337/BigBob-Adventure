@@ -1,4 +1,5 @@
 import pygame
+import random 
 
 from entity.enemy_type import Swarm, Tank, Shooter
 from entity.player import Player
@@ -37,6 +38,7 @@ class Game:
         self.handler = Handler(self.player, self.world)
 
         self.running = True
+        self.shake_intensity = 0 
 
         # УМНЫЙ СПАВН ВРАГОВ
         safe_spots = self.dungeon_generator.get_random_floor_coords(20)
@@ -93,14 +95,29 @@ class Game:
             if dt > 0.05: 
                 dt = 0.05
 
-            camera_x = int(self.player.rect.x + 16 - SCREEN_WIDTH / 2)
-            camera_y = int(self.player.rect.y + 16 - SCREEN_HEIGHT / 2)
+            base_cam_x = int(self.player.rect.x + 16 - SCREEN_WIDTH / 2)
+            base_cam_y = int(self.player.rect.y + 16 - SCREEN_HEIGHT / 2)
             
-            self.handler.process_events(self, camera_x, camera_y)
-
+            self.handler.process_events(self, base_cam_x, base_cam_y)
             self.update(dt)
+
+            # СИСТЕМА ТРЯСКИ ЭКРАНА (SCREEN SHAKE) 
+            if self.shake_intensity > 0:
+                self.shake_intensity -= 50 * dt 
+                if self.shake_intensity < 0: self.shake_intensity = 0
+
+            current_weapon = self.player.inventory[self.player.current_weapon_idx]
+            if hasattr(current_weapon, 'is_firing') and current_weapon.is_firing:
+                self.shake_intensity = max(self.shake_intensity, 3.0) 
+
+            final_cam_x = self.player.rect.x + 16 - SCREEN_WIDTH / 2
+            final_cam_y = self.player.rect.y + 16 - SCREEN_HEIGHT / 2
+
+            if self.shake_intensity > 0:
+                final_cam_x += random.uniform(-self.shake_intensity, self.shake_intensity)
+                final_cam_y += random.uniform(-self.shake_intensity, self.shake_intensity)
+
+            draw_cam_x = int(final_cam_x)
+            draw_cam_y = int(final_cam_y)
             
-            camera_x = int(self.player.rect.x + 16 - SCREEN_WIDTH / 2)
-            camera_y = int(self.player.rect.y + 16 - SCREEN_HEIGHT / 2)
-            
-            self.renderer.draw(camera_x, camera_y)
+            self.renderer.draw(draw_cam_x, draw_cam_y)

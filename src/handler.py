@@ -35,7 +35,7 @@ class Handler:
     def process_elements(self, game): 
         """Главный метод-диспетчер."""
         self._process_effects()
-        self._process_grenades()
+        self._process_grenades(game) # ПЕРЕДАЕМ GAME СЮДА
         self._process_bullets(game)
 
     def _process_effects(self):
@@ -43,21 +43,22 @@ class Handler:
             if not effect.is_alive:
                 self.effects.remove(effect)
 
-    def _process_grenades(self):
+    def _process_grenades(self, game):
         for grenade in self.grenades[:]:
             if not grenade.exploded:
-                # проверка на столкнокение со стеной
+                # проверка на столкновение со стеной
                 for wall in self.walls:
                     if grenade.rect.colliderect(wall):
                         grenade.is_moving = False
                         break
-            else: self._grenade_is_boom(grenade)
+            else: self._grenade_is_boom(game, grenade) 
                 
-    def _grenade_is_boom(self, grenade):
+    def _grenade_is_boom(self, game, grenade):
         # эффекты оставляемые гранатой
         for _ in range(5): self.effects.append(SparkEffect(grenade.rect.centerx, grenade.rect.centery, (255, 100, 50)))
         
-        # убийство врагов
+        # ВКЛЮЧАЕМ ТРЯСКУ ЭКРАНА 
+        game.shake_intensity = 25 
         for enemy in self.enemies[:]:
             enemy_pos = pygame.math.Vector2(enemy.rect.center)
             if grenade.pos.distance_to(enemy_pos) <= grenade.blast_radius:
