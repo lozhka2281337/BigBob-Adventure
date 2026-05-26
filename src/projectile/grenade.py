@@ -19,18 +19,7 @@ class Grenade(Bullet):
         self.target_dist = min(dist_to_target, max_range)
 
     def update(self, world, camera, dt):
-        if self.is_moving:
-            if self.pos.distance_to(self.start_pos) < self.target_dist:
-                self.pos += self.direction * self.speed * dt
-                self.rect.centerx = round(self.pos.x)
-                self.rect.centery = round(self.pos.y)
-
-                for wall in world.walls:
-                    if self.rect.colliderect(wall):
-                        self.is_moving = False
-                        break 
-            else:
-                self.is_moving = False
+        if self.is_moving: self._movenment(world, dt)
                 
         current_time = pygame.time.get_ticks()
         if current_time - self.spawn_time >= self.fuse_time:
@@ -82,3 +71,16 @@ class Grenade(Bullet):
                     enemy.knockback += push_dir.normalize() * 1500
         
         world.grenades.remove(self)
+
+    def _movenment(self, world, dt):
+        if self.pos.distance_to(self.start_pos) < self.target_dist:
+            self.pos += self.direction * self.speed * dt
+            self.rect.centerx = round(self.pos.x)
+            self.rect.centery = round(self.pos.y)
+
+            for wall in world.walls:
+                if self.rect.colliderect(wall):
+                    self.is_moving = False
+                    break 
+        else:
+            self.is_moving = False
