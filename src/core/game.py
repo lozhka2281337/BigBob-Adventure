@@ -1,11 +1,15 @@
 import pygame
+
+from dungeon.dungeon_generation import DungeonGeneration as dg
+
 from entity.enemy_type import Swarm, Tank, Shooter
 from entity.player import Player
-from dungeon.dungeon_generation import DungeonGeneration as dg
+
 from core.world import World
 from core.renderer import Renderer
 from core.handler import Handler
 from core.camera import Camera 
+
 from config import (SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT, 
                     FPS, TILE_SIZE, ENEMY_SIZE)
 
@@ -23,16 +27,18 @@ class Game:
     def new_game(self):
         self.world = World()
         self.dungeon_generator = dg(self.world)
+
         player_x, player_y = self.dungeon_generator.get_start_coord()
+
         self.player = Player(player_x, player_y)
         self.renderer = Renderer(self.screen, self.player, self.world)
         self.handler = Handler(self.player, self.world)
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.running = True
+        
         self.spawn_enemies(player_x, player_y)
+        self.running = True
 
     def spawn_enemies(self, player_x, player_y):
-        # УМНЫЙ СПАВН ВРАГОВ
         safe_spots = self.dungeon_generator.get_random_floor_coords(20)
         
         for i, (spot_x, spot_y) in enumerate(safe_spots):
@@ -43,7 +49,6 @@ class Game:
                 spawn_x = spot_x + (TILE_SIZE - ENEMY_SIZE) // 2
                 spawn_y = spot_y + (TILE_SIZE - ENEMY_SIZE) // 2
                 
-                # РАСПРЕДЕЛЕНИЕ ТИПОВ ВРАГОВ
                 roll = i % 4
                 if roll == 0:
                     self.world.enemies.append(Tank(spawn_x, spawn_y))
@@ -74,8 +79,8 @@ class Game:
         
         if self.player.hp <= 0:
             self.death_player()
+
     def draw(self, dt):
-        # СИСТЕМА ТРЯСКИ ЭКРАНА (SCREEN SHAKE) 
         current_weapon = self.player.inventory.get_current()
         if hasattr(current_weapon, 'is_firing') and current_weapon.is_firing:
             self.camera.add_shake(3.0) 

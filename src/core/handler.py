@@ -1,10 +1,12 @@
 import pygame
-from entity.bullet import SparkEffect 
+from projectile.effects import SparkEffect 
 from config import MAP_WIDTH, MAP_HEIGHT, TILE_SIZE
 
 class Handler:
     def __init__(self, player, world):
         self.player = player
+
+        self.world = world
         self.walls = world.walls
         self.bullets = world.bullets
         self.enemies = world.enemies
@@ -50,21 +52,7 @@ class Handler:
                         grenade.is_moving = False
                         break
             else: 
-                self._grenade_is_boom(camera, grenade) 
-                
-    def _grenade_is_boom(self, camera, grenade):
-        # эффекты оставляемые гранатой
-        for _ in range(5): self.effects.append(SparkEffect(grenade.rect.centerx, grenade.rect.centery, (255, 100, 50)))
-        camera.add_shake(25) 
-        
-        for enemy in self.enemies[:]:
-            enemy_pos = pygame.math.Vector2(enemy.rect.center)
-            if grenade.pos.distance_to(enemy_pos) <= grenade.blast_radius:
-                enemy.get_damage(200)                
-                push_dir = enemy_pos - grenade.pos
-                if push_dir.magnitude() > 0:
-                    enemy.knockback += push_dir.normalize() * 1500
-        self.grenades.remove(grenade)
+                grenade._grenade_is_boom(self.world, camera) 
 
     def _process_bullets(self):
         for bullet in self.bullets[:]:               

@@ -1,7 +1,7 @@
 import pygame
 import math
 
-from .weapon import Inventory 
+from core.inventory import Inventory 
 from core.animation import Animation 
 
 from config import PLAYER_SPEED, PLAYER_HP, PLAYER_SIZE, PLAYER_COLOR
