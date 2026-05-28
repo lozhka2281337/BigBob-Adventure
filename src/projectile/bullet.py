@@ -76,7 +76,7 @@ class Bullet:
 
     def _check_enemy_bullet_hit(self, world, player):
         if self.rect.colliderect(player.rect):
-                self.player.get_damage(self.damage)
+                player.get_damage(self.damage)
                 self._bullet_death(world)
 
     def _bullet_death(self, world):

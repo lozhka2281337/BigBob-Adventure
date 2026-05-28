@@ -1,12 +1,9 @@
 import random
 import pygame
 
-from config import TILE_SIZE, ROWS, COLS, MAP_WIDTH, MAP_HEIGHT
+from config import TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
 
-#MAP_WIDTH = 100
-#MAP_HEIGHT = 100
-
-"""  """
+""" генерация подземелья через случайное блуждание """
 
 class DungeonGeneration:
     def __init__(self, world, n=4000):
@@ -16,9 +13,9 @@ class DungeonGeneration:
         self.dungeon_map = [[1 for _ in range(MAP_WIDTH)] for _ in range(MAP_HEIGHT)]
         self.directions = [[0, 1], [1, 0], [-1, 0], [0, -1]]
         
-        self.generate_dungeon()
+        self._generate_dungeon()
 
-    def generate_dungeon(self):
+    def _generate_dungeon(self):
         x = random.randint(1, MAP_WIDTH-2)
         y = random.randint(1, MAP_HEIGHT-2)
 
@@ -34,9 +31,9 @@ class DungeonGeneration:
                     self.dungeon_map[y][x] = 0
                     steps_made += 1
 
-        self.create_walls()
+        self._create_walls()
 
-    def create_walls(self):
+    def _create_walls(self):
         for y in range(MAP_HEIGHT):
             for x in range(MAP_WIDTH):
                 if self.dungeon_map[y][x] == 1:

@@ -6,4 +6,5 @@ class World:
         self.effects = []
         self.walls = []
 
-        
+        # матрица карты
+        matrix = []

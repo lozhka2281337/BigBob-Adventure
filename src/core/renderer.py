@@ -1,5 +1,5 @@
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, BLUE_WALL, MAP_WIDTH, MAP_HEIGHT
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, WALL_COLOR, MAP_WIDTH, MAP_HEIGHT, SURFACE_COLOR
 
 class Renderer:
     def __init__(self, screen, player, world):
@@ -11,6 +11,7 @@ class Renderer:
         self.effects = world.effects
         self.grenades = world.grenades
         self.enemies = world.enemies
+        self.matrix = world.matrix
 
         self.FONT = pygame.font.SysFont("Arial", 32, bold=True)
         self.map_surface = pygame.Surface((MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE), pygame.SRCALPHA)
@@ -18,18 +19,14 @@ class Renderer:
         self.init_map_surface()
 
     def init_map_surface(self):
-        surface_width = MAP_WIDTH * TILE_SIZE
-        surface_height = MAP_HEIGHT * TILE_SIZE
-
-        # временная сетка
-        for x in range(0, surface_width, TILE_SIZE):
-            pygame.draw.line(self.map_surface, (100, 50, 150), (x, 0), (x, surface_height))
-        for y in range(0, surface_height, TILE_SIZE):
-            pygame.draw.line(self.map_surface, (100, 50, 150), (0, y), (surface_width, y))
+        for y in range(MAP_HEIGHT):
+            for x in range(MAP_WIDTH):
+                if self.matrix[y][x] == 0:
+                    pygame.draw.rect(self.map_surface, SURFACE_COLOR, (x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
 
         """ стены """
         for wall in self.walls:
-            pygame.draw.rect(self.map_surface, BLUE_WALL, wall)
+            pygame.draw.rect(self.map_surface, WALL_COLOR, wall)
 
     def draw_hp(self):
         pygame.draw.rect(self.screen, (50, 50, 50), (10, 10, 180, 50))
@@ -73,7 +70,7 @@ class Renderer:
 
     def draw(self, camera_x, camera_y):
         """ карта """
-        self.screen.fill("purple")
+        self.screen.fill(WALL_COLOR)
         self.screen.blit(self.map_surface, (-camera_x, -camera_y))
 
         """ ентити """

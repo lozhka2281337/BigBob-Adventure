@@ -1,6 +1,7 @@
 import pygame
 
 from dungeon.dungeon_generation import DungeonGeneration as dg
+from dungeon.BSP.BSP_generation import BSPGeneration as BSP
 
 from entity.enemy_type import Swarm, Tank, Shooter
 from entity.player import Player
@@ -26,7 +27,8 @@ class Game:
 
     def new_game(self):
         self.world = World()
-        self.dungeon_generator = dg(self.world)
+        self.dungeon_generator = BSP(self.world)
+        self.dungeon_generator.generate_dungeon()
 
         player_x, player_y = self.dungeon_generator.get_start_coord()
 
@@ -56,7 +58,7 @@ class Game:
                     self.world.enemies.append(Shooter(spawn_x, spawn_y)) 
                 else:
                     self.world.enemies.append(Swarm(spawn_x, spawn_y))
-
+                    
     def death_player(self):
         self.renderer.draw_death_screen()
         self.new_game()
@@ -64,16 +66,16 @@ class Game:
     def update(self, dt: float):
         self.player.update(dt, self.world)
 
-        for bullet in self.world.bullets:
+        for bullet in self.world.bullets[:]:
             bullet.update(self.world, self.player, dt)
 
-        for grenade in self.world.grenades:
+        for grenade in self.world.grenades[:]:
             grenade.update(self.world, self.camera, dt)
   
-        for effect in self.world.effects:
+        for effect in self.world.effects[:]:
             effect.update(self.world.effects, dt)
    
-        for enemy in self.world.enemies:
+        for enemy in self.world.enemies[:]:
             enemy.update(dt, self.player, self.world)
 
         self.player.process_weapon_damage(self.world.enemies, self.world.walls)
