@@ -23,6 +23,7 @@ class Bullet:
     def update(self, world, player, dt):
         self._movenment(world, dt)
         
+        if self._check_max_dist(world): return
         if self._check_wall_colide(world): return 
 
         if self.player_bullet: self._check_player_bullet_hit(world)
@@ -43,14 +44,18 @@ class Bullet:
         else:
             self.direction = pygame.math.Vector2(1, 0)
 
-    def _movenment(self, world, dt):
+    def _movenment(self, dt):
         self.pos += self.direction * self.speed * dt
         self.rect.centerx = round(self.pos.x)
         self.rect.centery = round(self.pos.y)
 
+    def _check_max_dist(self, world) -> bool:
         if self.max_dist:
             if self.pos.distance_to(self.start_pos) > self.max_dist:
                 world.bullets.remove(self)
+                return True
+        
+        return False
         
 
     def _check_wall_colide(self, world) -> bool:
