@@ -1,5 +1,5 @@
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, WALL_COLOR, MAP_WIDTH, MAP_HEIGHT, SURFACE_COLOR
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, SURFACE_COLOR
 
 
 class Renderer:
@@ -17,6 +17,15 @@ class Renderer:
         self.FONT = pygame.font.SysFont("Arial", 32, bold=True)
         self.map_surface = pygame.Surface((MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE), pygame.SRCALPHA)
 
+
+        #Загружаем спрайт для пола
+        floor_lvl1 = pygame.image.load("assets/FloorLvl1.png").convert_alpha()
+        self.floor_lvl1 = pygame.transform.scale(floor_lvl1, (TILE_SIZE, TILE_SIZE))
+
+        #Загружаем спрайт для стен
+        roof_lvl1 = pygame.image.load("assets/RoofLvl1.png").convert_alpha()
+        self.roof_lvl1 = pygame.transform.scale(roof_lvl1, (TILE_SIZE, TILE_SIZE))
+
         # Загружаем спрайт для отображения HP
         self.hp_sprite = pygame.image.load("assets/Hp.png").convert_alpha()
         self.hp_width = self.hp_sprite.get_width()
@@ -27,12 +36,11 @@ class Renderer:
         for y in range(MAP_HEIGHT):
             for x in range(MAP_WIDTH):
                 if self.matrix[y][x] == 0:
-                    pygame.draw.rect(self.map_surface, SURFACE_COLOR,
-                                     (x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                    self.map_surface.blit(self.floor_lvl1, (x * TILE_SIZE, y * TILE_SIZE))
 
         """ стены """
         for wall in self.walls:
-            pygame.draw.rect(self.map_surface, WALL_COLOR, wall)
+            self.map_surface.blit(self.roof_lvl1, (wall.x, wall.y))
 
     def draw_hp(self):
         """Рисуем столько спрайтов HP, сколько здоровья у игрока"""
@@ -79,7 +87,7 @@ class Renderer:
 
     def draw(self, camera_x, camera_y):
         """ карта """
-        self.screen.fill(WALL_COLOR)
+        self.screen.fill(SURFACE_COLOR)
         self.screen.blit(self.map_surface, (-camera_x, -camera_y))
 
         """ ентити """
