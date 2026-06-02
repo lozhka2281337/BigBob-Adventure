@@ -23,6 +23,11 @@ ROWS = 60
 SURFACE_COLOR = (75, 97, 42)
 WALL_COLOR = (143, 0, 52)
 
+
+""" степень темноты """
+DARKNESS_DEGREE = 240
+DARKNESS_RADIUS = 250
+
 """ BSP генерация """
 
 MIN_LEAF_SIZE = 20

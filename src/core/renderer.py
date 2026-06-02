@@ -1,5 +1,8 @@
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, WALL_COLOR, MAP_WIDTH, MAP_HEIGHT, SURFACE_COLOR
+from config import (SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 
+                    WALL_COLOR, MAP_WIDTH, MAP_HEIGHT, 
+                    SURFACE_COLOR, DARKNESS_DEGREE, DARKNESS_RADIUS
+)
 
 
 class Renderer:
@@ -21,9 +24,12 @@ class Renderer:
         self.hp_sprite = pygame.image.load("assets/Hp.png").convert_alpha()
         self.hp_width = self.hp_sprite.get_width()
 
-        self.init_map_surface()
+        self._init_map_surface()
 
-    def init_map_surface(self):
+        # маска для темноты
+        self.darkness_mask = self._create_darkness_mask()
+
+    def _init_map_surface(self):
         for y in range(MAP_HEIGHT):
             for x in range(MAP_WIDTH):
                 if self.matrix[y][x] == 0:
@@ -34,7 +40,7 @@ class Renderer:
         for wall in self.walls:
             pygame.draw.rect(self.map_surface, WALL_COLOR, wall)
 
-    def draw_hp(self):
+    def _draw_hp(self):
         """Рисуем столько спрайтов HP, сколько здоровья у игрока"""
         margin_x = 10  # отступ слева
         margin_y = 10  # отступ сверху
@@ -55,7 +61,7 @@ class Renderer:
 
         pygame.time.wait(3000)
 
-    def draw_weapon_hud(self):
+    def _draw_weapon_hud(self):
         start_x = SCREEN_WIDTH - 220
         start_y = SCREEN_HEIGHT - 80
 
@@ -72,10 +78,22 @@ class Renderer:
                 text_surf.set_alpha(150)
             self.screen.blit(text_surf, (start_x, start_y + offset_y))
 
-    def draw_weapon(self, camera_x, camera_y):
+    def _draw_weapon(self, camera_x, camera_y):
         weapon = self.player.inventory.get_current()
         if hasattr(weapon, 'draw'):
             weapon.draw(self.screen, camera_x, camera_y, self.player.rect, self.walls)
+
+    def _create_darkness_mask(self, width=SCREEN_WIDTH, height=SCREEN_HEIGHT, radius=DARKNESS_RADIUS) -> pygame.Surface:
+        # Создаем поверхность размером с экран с поддержкой прозрачности 
+        mask = pygame.Surface((width, height), pygame.SRCALPHA)
+        # Заливаем всю маску полностью черным цветом
+        mask.fill((0, 0, 0, DARKNESS_DEGREE)) 
+
+        for r in range(radius, 0, -2):
+            alpha = int(DARKNESS_DEGREE * (r / radius))
+            pygame.draw.circle(mask, (0, 0, 0, alpha), (width // 2, height // 2), r)
+            
+        return mask
 
     def draw(self, camera_x, camera_y):
         """ карта """
@@ -86,7 +104,7 @@ class Renderer:
         self.player.draw(self.screen, camera_x, camera_y)
 
         """ атака оружия игрока """
-        self.draw_weapon(camera_x, camera_y)
+        self._draw_weapon(camera_x, camera_y)
 
         for bullet in self.bullets:
             bullet.draw(self.screen, camera_x, camera_y)
@@ -100,8 +118,11 @@ class Renderer:
         for enemy in self.enemies:
             enemy.draw(self.screen, camera_x, camera_y)
 
+        # рисуем темноту вокруг игрока
+        self.screen.blit(self.darkness_mask, (0, 0))
+
         """ интерфейс """
-        self.draw_hp()
-        self.draw_weapon_hud()
+        self._draw_hp()
+        self._draw_weapon_hud()
 
         pygame.display.flip()
