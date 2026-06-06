@@ -23,8 +23,8 @@ class Renderer:
         self.floor_lvl1 = pygame.transform.scale(floor_lvl1, (TILE_SIZE, TILE_SIZE))
 
         #Загружаем спрайт для стен
-        roof_lvl1 = pygame.image.load("assets/RoofLvl1.png").convert_alpha()
-        self.roof_lvl1 = pygame.transform.scale(roof_lvl1, (TILE_SIZE, TILE_SIZE))
+        wall_lvl1 = pygame.image.load("assets/WallLvl1.png").convert_alpha()
+        self.wall_lvl1 = pygame.transform.scale(wall_lvl1, (TILE_SIZE, TILE_SIZE))
 
         # Загружаем спрайт для отображения HP
         self.hp_sprite = pygame.image.load("assets/Hp.png").convert_alpha()
@@ -40,7 +40,7 @@ class Renderer:
 
         """ стены """
         for wall in self.walls:
-            self.map_surface.blit(self.roof_lvl1, (wall.x, wall.y))
+            self.map_surface.blit(self.wall_lvl1, (wall.x, wall.y))
 
     def draw_hp(self):
         """Рисуем столько спрайтов HP, сколько здоровья у игрока"""
