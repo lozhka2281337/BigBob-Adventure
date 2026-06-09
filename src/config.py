@@ -67,6 +67,7 @@ PING_SPEED = 450
 
 """ враги """
 ENEMY_SIZE = 32
+ENEMY_VISIBLE_TIME = 2.0 # время видимости после активации пинга
 
 # 1. Swarm (Бегун)
 ENEMY_SWARM_HP = 50

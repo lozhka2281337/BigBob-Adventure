@@ -82,6 +82,19 @@ class Renderer:
         if hasattr(weapon, 'draw'):
             weapon.draw(self.screen, camera_x, camera_y, self.player.rect, self.walls)
 
+    def _draw_ping_interface(self):
+        font = pygame.font.SysFont(None, 24)
+
+        status_text = "PING ГОТОВ [Q]"
+        text_color = cfg.PING_COLOR
+
+        if self.player.ping_timer > 0:
+
+            status_text = f"СКАНИРОВАНИЕ... {round(self.player.ping_timer * 10 / cfg.FPS, 2)}"
+            text_color = (100, 100, 100)
+
+        self.screen.blit(font.render(status_text, True, text_color), (10, 40))
+
     def _create_darkness_mask(self, width=cfg.SCREEN_WIDTH, height=cfg.SCREEN_HEIGHT, radius=cfg.DARKNESS_RADIUS) -> pygame.Surface:
         # Создаем поверхность размером с экран с поддержкой прозрачности 
         mask = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -115,7 +128,8 @@ class Renderer:
             effect.draw(self.screen, camera_x, camera_y)
 
         for enemy in self.enemies:
-            enemy.draw(self.screen, camera_x, camera_y)
+            if enemy.visible_timer <= 0:
+                enemy.draw(self.screen, camera_x, camera_y)
 
         for ping in self.pings:
             ping.draw(self.screen, camera_x, camera_y)
@@ -123,8 +137,15 @@ class Renderer:
         # рисуем темноту вокруг игрока
         self.screen.blit(self.darkness_mask, (0, 0))
 
+        # рисуем врагов, которые попали под пинг
+        for enemy in self.enemies:
+            if enemy.visible_timer > 0.0:
+                enemy.draw(self.screen, camera_x, camera_y)
+                print(enemy.visible_timer)
+
         """ интерфейс """
         self._draw_hp()
         self._draw_weapon_hud()
+        self._draw_ping_interface()
 
         pygame.display.flip()

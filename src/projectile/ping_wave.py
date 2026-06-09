@@ -27,7 +27,7 @@ class PingWave:
             distance = math.hypot(dx, dy)
 
             if distance <= self.radius and distance >= self.radius - self.speed * 2:
-                enemy.visible_timer = 2 * cfg.FPS
+                enemy.visible_timer = cfg.ENEMY_VISIBLE_TIME
 
     def draw(self, surface: pygame.Surface, cam_x, cam_y):
         # Вычисляем прозрачность 

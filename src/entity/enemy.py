@@ -5,11 +5,14 @@ class Enemy:
     def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple):
         self.pos = pygame.math.Vector2(x, y)
         self.rect = pygame.Rect(x, y, ENEMY_SIZE, ENEMY_SIZE)
+        
         self.hp = hp
         self.speed = speed
         self.color = color
+
         self.knockback = pygame.math.Vector2(0, 0)
         self.is_moving = False 
+        self.visible_timer = 0 # таймер для стелс режима
 
     def move(self, walls: list[pygame.Rect], dt: float, direction: pygame.math.Vector2) -> None:
         old_pos = pygame.math.Vector2(self.pos)
@@ -64,6 +67,9 @@ class Enemy:
             
         if direction.magnitude() > 0:
             direction = direction.normalize()
+
+        if self.visible_timer > 0:
+            self.visible_timer -= dt
             
         self.move(world.walls, dt, direction)
 

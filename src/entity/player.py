@@ -41,7 +41,6 @@ class Player:
         if self.ping_timer <= 0: 
             pings.append(PingWave(self.pos.x, self.pos.y))
             self.ping_timer = cfg.PING_TIMER
-            print("ping")
 
     def process_weapon_damage(self, enemies, walls) -> None:
         self.inventory.get_current().process_damage(enemies, self.rect, walls)
@@ -90,7 +89,6 @@ class Player:
             self.invulnerable_timer -= dt
 
     def _update_ping_timer(self, dt):
-        print(self.ping_timer)
         if self.ping_timer > 0:
             self.ping_timer -= dt
 

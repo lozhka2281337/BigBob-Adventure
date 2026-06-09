@@ -62,6 +62,9 @@ class Shooter(Enemy):
 
         if direction.magnitude() > 0:
             direction = direction.normalize()
+
+        if self.visible_timer > 0:
+            self.visible_timer -= dt
             
         self.move(world.walls, dt, direction)
         
