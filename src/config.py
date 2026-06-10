@@ -8,11 +8,21 @@ BLACK = (20, 20, 25)
 WHITE = (255, 255, 255)
 BLUE_WALL = (100, 150, 200)
 
+<<<<<<< HEAD
 MAP_WIDTH = 80
 MAP_HEIGHT = 60
+=======
+MAP_WIDTH = 320 // 4
+MAP_HEIGHT = 240 // 4
+>>>>>>> feature/stels-mode
 
 SPAWN_ENEMY_EVENT = pygame.event.custom_type()
 SPAWN_ENEMY_TIME = 1800
+
+
+""" режимы """
+NORMAL_MOD = "normal"
+DARK_MOD = "stels"
 
 
 """ карта """
@@ -21,7 +31,13 @@ COLS = 80
 ROWS = 60
  
 SURFACE_COLOR = (75, 97, 42)
+FLOOR_COLOR = (0, 0, 0)
 WALL_COLOR = (143, 0, 52)
+
+
+""" степень темноты """
+DARKNESS_DEGREE = 240
+DARKNESS_RADIUS = 250
 
 """ BSP генерация """
 
@@ -53,8 +69,16 @@ MELEE = "USB-Katana"
 ZIP_BOMB = "Zip-Bomb"
 
 
+""" пинг """
+PING_TIMER = 2.0 
+PING_COLOR = (0, 200, 255)
+PING_START_RADIUS = 10
+PING_MAX_RADIUS = 500 
+PING_SPEED = 450
+
 """ враги """
 ENEMY_SIZE = 32
+ENEMY_VISIBLE_TIME = 2.0 # время видимости после активации пинга
 
 # 1. Swarm (Бегун)
 ENEMY_SWARM_HP = 50
