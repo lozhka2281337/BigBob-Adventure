@@ -4,7 +4,7 @@ from .weapon import Weapon
 from projectile.grenade import Grenade 
 
 class GrenadeLauncher(Weapon):
-    def __init__(self, name, damage, radius, clip, shot_delay, throw_speed, blast_radius, fuse_time, max_range):
+    def __init__(self, name, radius, clip, shot_delay, throw_speed, blast_radius, fuse_time, max_range, damage=0):
         super().__init__(name, damage, radius, clip, shot_delay)
         self.throw_speed = throw_speed
         self.blast_radius = blast_radius

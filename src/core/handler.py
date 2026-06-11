@@ -12,7 +12,7 @@ class Handler:
         self.grenades = world.grenades
         self.pings = world.pings
 
-    def process_events(self, game, camera_x: float, camera_y: float) -> bool | None:
+    def process_events(self, game, camera_x: float, camera_y: float):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game.running = False

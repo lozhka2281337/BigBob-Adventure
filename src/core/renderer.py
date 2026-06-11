@@ -130,6 +130,9 @@ class Renderer:
         """ атака оружия игрока """
         self._draw_weapon(camera_x, camera_y)
 
+        for item in self.items:
+            item.draw(self.screen, camera_x, camera_y)
+
         for bullet in self.bullets:
             bullet.draw(self.screen, camera_x, camera_y)
 
@@ -142,9 +145,6 @@ class Renderer:
         for enemy in self.enemies:
             if enemy.visible_timer <= 0:
                 enemy.draw(self.screen, camera_x, camera_y)
-
-        for item in self.items:
-            item.draw(self.screen, camera_x, camera_y)
 
         if self.world.mod == cfg.DARK_MOD:
             for ping in self.pings:
