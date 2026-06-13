@@ -8,8 +8,8 @@ from config import (ENEMY_SWARM_HP, ENEMY_SWARM_SPEED, ENEMY_SWARM_COLOR, ENEMY_
 
 # 1. SWARM (Быстрый бегун, берет количеством)
 class Swarm(AnimatedEnemy):
-    def __init__(self, x: int, y: int):
-        super().__init__(x, y, ENEMY_SWARM_HP, ENEMY_SWARM_SPEED, ENEMY_SWARM_COLOR)
+    def __init__(self, x: int, y: int, room: pygame.Rect):
+        super().__init__(x, y, ENEMY_SWARM_HP, ENEMY_SWARM_SPEED, ENEMY_SWARM_COLOR, room)
         self.attack_range = ENEMY_SWARM_ATTACK_RANGE
         self.damage = 1
         self.anim_left = Animation("assets/fast-enemy-run-left.png", columns=5, speed=0.1, scale=1.5)
@@ -18,8 +18,8 @@ class Swarm(AnimatedEnemy):
 
 # 2. TANK (Медленный, толстый, бьет больно)
 class Tank(AnimatedEnemy):
-    def __init__(self, x: int, y: int):
-        super().__init__(x, y, ENEMY_TANK_HP, ENEMY_TANK_SPEED, ENEMY_TANK_COLOR)
+    def __init__(self, x: int, y: int, room: pygame.Rect):
+        super().__init__(x, y, ENEMY_TANK_HP, ENEMY_TANK_SPEED, ENEMY_TANK_COLOR, room)
         self.attack_range = ENEMY_TANK_ATTACK_RANGE
         self.damage = ENEMY_TANK_DAMAGE
         self.anim_left = Animation("assets/tank-sprite-left.png", columns=4, speed=0.25, scale=2.5)
@@ -28,8 +28,8 @@ class Tank(AnimatedEnemy):
 
 # 3. SHOOTER (Держит дистанцию, стреляет)
 class Shooter(AnimatedEnemy):
-    def __init__(self, x: int, y: int):
-        super().__init__(x, y, ENEMY_SHOOTER_HP, ENEMY_SHOOTER_SPEED, ENEMY_SHOOTER_COLOR)
+    def __init__(self, x: int, y: int, room: pygame.Rect):
+        super().__init__(x, y, ENEMY_SHOOTER_HP, ENEMY_SHOOTER_SPEED, ENEMY_SHOOTER_COLOR, room)
         self.attack_range = ENEMY_SHOOTER_ATTACK_RANGE
         self.damage = ENEMY_SHOOTER_DAMAGE
         self.last_shot_time = 0
@@ -39,13 +39,14 @@ class Shooter(AnimatedEnemy):
         self.current_anim = self.anim_right
 
     def _handle_chase(self, player, world, dt: float) -> pygame.math.Vector2:
-
         if self.check_los(player.rect, world.walls):
+            self.path.clear() 
+            
             vec_to_player = pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
-
                                                 player.rect.centery - self.rect.centery)
             dist = vec_to_player.magnitude()
             direction = pygame.math.Vector2(0, 0)
+
 
             if dist > self.attack_range + 50:
                 direction = vec_to_player
@@ -62,15 +63,8 @@ class Shooter(AnimatedEnemy):
 
             return direction
 
-        elif self.last_known_pos:
-            vec_to_lkp = self.last_known_pos - self.pos
-            if vec_to_lkp.magnitude() < 50:
-                self.last_known_pos = None 
-                return pygame.math.Vector2(0, 0)
-            return vec_to_lkp
-
-        return pygame.math.Vector2(0, 0)
-
+        else:
+            return super()._handle_chase(player, world, dt)
 
     def _shoot(self, player, bullets: list) -> None:
         new_bullet = Bullet(self.rect.centerx, self.rect.centery,

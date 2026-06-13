@@ -11,6 +11,7 @@ class World:
         self.walls = []
         self.items = []
         self.pings = []
+        self.rooms = []
 
         # матрица карты
         self.matrix = []

@@ -1,34 +1,33 @@
 import pygame
+import random
 from enum import Enum, auto
+
+from core.pathfinder import PathFinder
 from config import (ENEMY_SIZE, AGRO_DISTANCE, LOSE_AGRO_DISTANCE, WAYPOINT_TOLERANCE)
 
-# ИИ которая решает, что делает враг
 class EnemyState(Enum):
-    IDLE = auto()   # Просто стоит на посту
-    CHASE = auto()  # Агрится и бежит за игроком
-    RETURN = auto() # Потерял игрока из виду и топает на пост
+    PATROL = auto() 
+    CHASE = auto() 
+    RETURN = auto() 
 
 class Enemy:
-    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple):
+    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple, room: pygame.Rect):
         self.pos = pygame.math.Vector2(x, y)
-        self.rect = pygame.Rect(x, y, ENEMY_SIZE, ENEMY_SIZE)
-        
+        self.rect = pygame.Rect(x, y, ENEMY_SIZE, ENEMY_SIZE)       
         self.hp = hp
         self.speed = speed
         self.color = color
-
+        self.room = room 
         self.knockback = pygame.math.Vector2(0, 0)
-
         self.is_moving = False
-
-        # Настройки ИИ 
-        self.home_pos = pygame.math.Vector2(x, y)
-        self.state = EnemyState.IDLE
+        self.state = EnemyState.PATROL
         self.agro_distance = AGRO_DISTANCE
         self.lose_agro_distance = LOSE_AGRO_DISTANCE
-
         self.last_known_pos = None
-        self.visible_timer = 0 # таймер для стелс режима
+        self.visible_timer = 0 
+        self.patrol_target = None
+        self.patrol_timer = 0.0
+        self.path = []
 
     def move(self, walls: list[pygame.Rect], dt: float, direction: pygame.math.Vector2) -> None:
         if direction.magnitude() > 0:
@@ -68,7 +67,7 @@ class Enemy:
 
     def get_damage(self, damage: int) -> None:
         self.hp -= damage
-        if self.state in [EnemyState.IDLE, EnemyState.RETURN]:
+        if self.state in [EnemyState.PATROL, EnemyState.RETURN]:
             self.state = EnemyState.CHASE
 
     def check_los(self, target_rect: pygame.Rect, walls: list[pygame.Rect]) -> bool:
@@ -78,46 +77,123 @@ class Enemy:
                 return False
         return True
 
-    # Поведение в разных ситуациях 
+    def _get_random_patrol_point(self) -> pygame.math.Vector2:
+        margin = ENEMY_SIZE 
+        x = random.randint(self.room.left + margin, self.room.right - margin)
+        y = random.randint(self.room.top + margin, self.room.bottom - margin)
+        return pygame.math.Vector2(x, y)
+
+    def _handle_patrol(self, dt: float) -> pygame.math.Vector2:
+        if self.patrol_timer > 0:
+            self.patrol_timer -= dt
+            return pygame.math.Vector2(0, 0)
+
+        if not self.patrol_target:
+            self.patrol_target = self._get_random_patrol_point()
+
+        vec_to_target = self.patrol_target - self.pos
+        if vec_to_target.magnitude() < WAYPOINT_TOLERANCE:
+            self.patrol_target = None
+            self.patrol_timer = random.uniform(1.0, 2.5) 
+            return pygame.math.Vector2(0, 0)
+
+        return vec_to_target
+
     def _handle_chase(self, player, world, dt: float) -> pygame.math.Vector2:
         if self.check_los(player.rect, world.walls):
+            self.path.clear()
             return pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
                                        player.rect.centery - self.rect.centery)
+                                       
         elif self.last_known_pos:
-            vec_to_lkp = self.last_known_pos - self.pos
-            if vec_to_lkp.magnitude() < WAYPOINT_TOLERANCE:
-                self.last_known_pos = None 
+            if not self.path:
+                self.path = PathFinder.get_path(world.matrix, self.pos, self.last_known_pos)
+                
+            if self.path:
+                target_node = self.path[0]
+                vec_to_node = target_node - self.pos
+                
+                if vec_to_node.magnitude() < WAYPOINT_TOLERANCE:
+                    self.path.pop(0)
+                    return pygame.math.Vector2(0, 0)
+                return vec_to_node
+            else:
+                self.last_known_pos = None
                 return pygame.math.Vector2(0, 0)
-            return vec_to_lkp
 
         return pygame.math.Vector2(0, 0)
 
     def _handle_return(self, world, dt: float) -> pygame.math.Vector2:
-        vec_to_home = self.home_pos - self.pos
-        if vec_to_home.magnitude() < WAYPOINT_TOLERANCE:
-            self.state = EnemyState.IDLE 
+        room_center = pygame.math.Vector2(self.room.center)
+        
+        if not self.path:
+            self.path = PathFinder.get_path(world.matrix, self.pos, room_center)
+            
+        if self.path:
+            target_node = self.path[0]
+            vec_to_node = target_node - self.pos
+            
+            if vec_to_node.magnitude() < WAYPOINT_TOLERANCE:
+                self.path.pop(0)
+                if not self.path:
+                    self.state = EnemyState.PATROL
+                return pygame.math.Vector2(0, 0)
+            return vec_to_node
+        else:
+            self.state = EnemyState.PATROL 
             return pygame.math.Vector2(0, 0)
-        return vec_to_home
+
+    def _apply_separation(self, enemies: list, current_direction: pygame.math.Vector2) -> pygame.math.Vector2:
+        separation_vector = pygame.math.Vector2(0, 0)
+        neighbors_count = 0
+        separation_radius = ENEMY_SIZE * 1.5 
+
+        for other in enemies:
+            if other is self:
+                continue
+
+            dist = self.pos.distance_to(other.pos)
+            if 0 < dist < separation_radius:
+                diff = self.pos - other.pos
+                diff = diff.normalize() / dist 
+                separation_vector += diff
+                neighbors_count += 1
+
+        if neighbors_count > 0:
+            separation_vector /= neighbors_count
+            if separation_vector.magnitude() > 0:
+                separation_vector = separation_vector.normalize()
+                current_direction = current_direction + separation_vector * 1.5
+
+        return current_direction
 
     def update(self, world, player, dt: float) -> None:
         dist_to_player = self.pos.distance_to(player.pos)
         has_los = self.check_los(player.rect, world.walls)
+        is_player_in_room = self.room.colliderect(player.rect)
 
         if has_los:
             self.last_known_pos = pygame.math.Vector2(player.rect.center)
 
-        if self.state in [EnemyState.IDLE, EnemyState.RETURN]:
-            if dist_to_player < self.agro_distance and has_los:
+        old_state = self.state
+
+        if self.state in [EnemyState.PATROL, EnemyState.RETURN]:
+            if is_player_in_room:
+                self.state = EnemyState.CHASE
+            elif dist_to_player < self.agro_distance and has_los:
                 self.state = EnemyState.CHASE
 
         elif self.state == EnemyState.CHASE:
             if has_los:
-                if dist_to_player > self.lose_agro_distance:
+                if not is_player_in_room and dist_to_player > self.lose_agro_distance:
                     self.state = EnemyState.RETURN
                     self.last_known_pos = None
             else:
                 if not self.last_known_pos:
                     self.state = EnemyState.RETURN
+
+        if self.state != old_state:
+            self.path.clear()
 
         direction = pygame.math.Vector2(0, 0)
 
@@ -125,6 +201,10 @@ class Enemy:
             direction = self._handle_chase(player, world, dt)
         elif self.state == EnemyState.RETURN:
             direction = self._handle_return(world, dt)
+        elif self.state == EnemyState.PATROL:
+            direction = self._handle_patrol(dt)
+
+        direction = self._apply_separation(world.enemies, direction)
 
         if self.visible_timer > 0:
             self.visible_timer -= dt
@@ -136,12 +216,11 @@ class Enemy:
         pygame.draw.rect(surface, self.color, offset_rect)
 
 class AnimatedEnemy(Enemy):
-    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple):
-        super().__init__(x, y, hp, speed, color)
+    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple, room: pygame.Rect):
+        super().__init__(x, y, hp, speed, color, room)
         self.anim_left = None
         self.anim_right = None
         self.current_anim = None
-
 
     def update(self, world, player, dt: float) -> None:
         super().update(world, player, dt)

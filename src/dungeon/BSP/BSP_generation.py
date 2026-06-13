@@ -15,8 +15,20 @@ class BSPGeneration:
 
     def generate_dungeon(self):
         self._generate_leafs() 
+        self._extract_rooms()
         self._init_matrix()
         self._create_walls()
+
+    def _extract_rooms(self):
+        for leaf in self.leafs:
+            if leaf.room is not None:
+                pixel_rect = pygame.Rect(
+                    leaf.room.x * cfg.TILE_SIZE,
+                    leaf.room.y * cfg.TILE_SIZE,
+                    leaf.room.width * cfg.TILE_SIZE,
+                    leaf.room.height * cfg.TILE_SIZE
+                )
+                self.world.rooms.append(pixel_rect)
 
     def get_start_coord(self):
         for y in range(cfg.MAP_HEIGHT):
@@ -87,7 +99,6 @@ class BSPGeneration:
         for y in range(cfg.MAP_HEIGHT):
             for x in range(cfg.MAP_WIDTH):
                 if self.world.matrix[y][x] == 1:
-                    # Проверяем, касается ли стена пола хотя бы с одной стороны
                     is_visible = False
                     for dy, dx in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         ny, nx = y + dy, x + dx
@@ -99,6 +110,3 @@ class BSPGeneration:
                     if is_visible:
                         rect = pygame.Rect(x * cfg.TILE_SIZE, y * cfg.TILE_SIZE, cfg.TILE_SIZE, cfg.TILE_SIZE)
                         self.world.walls.append(rect)
-
-
-

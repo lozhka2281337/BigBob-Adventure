@@ -1,4 +1,5 @@
 import pygame 
+import random
 
 from entity.enemy_type import Swarm, Tank, Shooter
 from entity.items import HealthPack 
@@ -11,47 +12,58 @@ class Spawner:
         self.dungeon_generator = dungeon_generator
         self.player = player
 
-    def _is_in_room(self, spot_x, spot_y) -> bool:
-        grid_x = int(spot_x // cfg.TILE_SIZE)
-        grid_y = int(spot_y // cfg.TILE_SIZE)
-        matrix = self.world.matrix
-        
-        for dy in [-1, 0, 1]:
-            for dx in [-1, 0, 1]:
-                check_x, check_y = grid_x + dx, grid_y + dy
-                if 0 <= check_x < cfg.MAP_WIDTH and 0 <= check_y < cfg.MAP_HEIGHT:
-                    if matrix[check_y][check_x] != 0: 
-                        return False
-        return True
-
     def spawn_initial(self):
-        raw_spots = self.dungeon_generator.get_random_floor_coords(cfg.INITIAL_ENEMY_COUNT * 10)
-        room_spots = [spot for spot in raw_spots if self._is_in_room(spot[0], spot[1])]
-        
-        spawned = 0
-        for spot_x, spot_y in room_spots:
-            if spawned >= cfg.INITIAL_ENEMY_COUNT:
-                break
-                
-            dist = pygame.math.Vector2(spot_x, spot_y).distance_to(self.player.pos)
-            
-            if dist > 700:
-                spawn_x = spot_x + (cfg.TILE_SIZE - cfg.ENEMY_SIZE) // 2
-                spawn_y = spot_y + (cfg.TILE_SIZE - cfg.ENEMY_SIZE) // 2
-                
-                roll = spawned % 4
-                if roll == 0:
-                    self.world.enemies.append(Tank(spawn_x, spawn_y))
-                elif roll == 1:
-                    self.world.enemies.append(Shooter(spawn_x, spawn_y)) 
-                else:
-                    self.world.enemies.append(Swarm(spawn_x, spawn_y))
-                spawned += 1
+        self._spawn_enemies()
+        self._spawn_items()
 
-        item_spots = self.dungeon_generator.get_random_floor_coords(30)
-        valid_item_spots = [spot for spot in item_spots if self._is_in_room(spot[0], spot[1])]
+    def _spawn_enemies(self):
+        spawned_count = 0
+        shuffled_rooms = random.sample(self.world.rooms, len(self.world.rooms))
+
+        for room in shuffled_rooms:
+            if spawned_count >= cfg.INITIAL_ENEMY_COUNT:
+                break
+
+            if room.collidepoint(self.player.pos.x, self.player.pos.y):
+                continue
+
+            remaining = cfg.INITIAL_ENEMY_COUNT - spawned_count
+            
+            # Динамические границы: защита от краша, если остался 1 враг до лимита
+            min_group = min(2, remaining)
+            max_group = min(5, remaining)
+            
+            group_size = random.randint(min_group, max_group)
+            
+            for _ in range(group_size):
+                spawn_x, spawn_y = self._get_safe_spawn_pos(room, cfg.ENEMY_SIZE)
+                
+                roll = random.random()
+                if roll < 0.2:
+                    enemy = Tank(spawn_x, spawn_y, room)
+                elif roll < 0.5:
+                    enemy = Shooter(spawn_x, spawn_y, room)
+                else:
+                    enemy = Swarm(spawn_x, spawn_y, room)
+                    
+                self.world.enemies.append(enemy)
+                spawned_count += 1
+
+    def _spawn_items(self):
+        item_count = min(10, len(self.world.rooms))
+        rooms_for_items = random.sample(self.world.rooms, item_count)
         
-        for spot_x, spot_y in valid_item_spots[:10]:
-            spawn_x = spot_x + cfg.TILE_SIZE // 4 
-            spawn_y = spot_y + cfg.TILE_SIZE // 4
+        for room in rooms_for_items:
+            spawn_x, spawn_y = self._get_safe_spawn_pos(room, cfg.HEALTH_PACK_SIZE)
             self.world.items.append(HealthPack(spawn_x, spawn_y))
+
+    def _get_safe_spawn_pos(self, room: pygame.Rect, entity_size: int) -> tuple[int, int]:
+        margin = cfg.TILE_SIZE
+        if room.width > margin * 2 + entity_size and room.height > margin * 2 + entity_size:
+            x = random.randint(room.left + margin, room.right - margin - entity_size)
+            y = random.randint(room.top + margin, room.bottom - margin - entity_size)
+        else:
+            x = room.centerx - entity_size // 2
+            y = room.centery - entity_size // 2
+            
+        return x, y
