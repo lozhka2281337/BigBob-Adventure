@@ -23,8 +23,8 @@ class MainMenu:
         self.button_rects = []
         self._create_buttons()
 
-        self.scanline_y = 0
-        self.selected_index = 0
+        self.scanline_y = 0         # координата y скан линии
+        self.selected_index = 0     # индекс выбранной кнопки
 
     def draw(self, dt):
         self.screen.fill(cfg.COLOR_BG)

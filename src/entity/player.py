@@ -141,9 +141,9 @@ class Player:
         # Рисуем
         surface.blit(frame, frame_rect)
 
-        if self.invulnerable_timer > 0: self.draw_shield(surface, screen_x, screen_y)
+        if self.invulnerable_timer > 0: self._draw_shield(surface, screen_x, screen_y)
 
-    def draw_shield(self, surface: pygame.Surface, screen_x: float, screen_y: float):
+    def _draw_shield(self, surface: pygame.Surface, screen_x: float, screen_y: float):
         pulse = math.sin(pygame.time.get_ticks() * 0.01) * 5  
         radius = 40 + int(pulse)
         pygame.draw.circle(surface, (0, 255, 150), (screen_x + 16, screen_y + 16), radius, 3)
