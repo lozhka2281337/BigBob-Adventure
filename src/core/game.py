@@ -104,6 +104,9 @@ class Game:
                 return
             elif new_state == cfg.SETTINGS_BUTTON:
                 pass
+            elif new_state == cfg.EXIT_BUTTON:
+                pygame.quit()
+                return
 
             dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
 

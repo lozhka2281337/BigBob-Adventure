@@ -14,6 +14,7 @@ class MainMenu:
         # шрифты
         self.title_font = pygame.font.SysFont("Courier New", 50, bold=True)
         self.menu_font = pygame.font.SysFont("Courier New", 24, bold=True)
+        self.info_font = pygame.font.SysFont("Courier New", 20)
 
         self.title_text = cfg.GAME_TITLE
         self.menu_options = [cfg.START_GAME_BUTTON, cfg.SETTINGS_BUTTON, cfg.EXIT_BUTTON]
@@ -39,7 +40,7 @@ class MainMenu:
         elif self.selected_index == 1:
             return cfg.SETTINGS_BUTTON
         elif self.selected_index == 2:
-            pygame.quit()
+            return cfg.EXIT_BUTTON
 
         return cfg.DEFAULT_MENU_BUTTON
 
@@ -98,6 +99,9 @@ class MainMenu:
         self.screen.blit(title_surf, title_surf.get_rect(center=(self.width//2 + off_x, self.height//5 + off_y)))
         pygame.draw.line(self.screen, cfg.COLOR_NEON_BLUE, (self.width//4, self.height//5 + 40), (3 * self.width//4, self.height//5 + 40), 2)
 
+        footer_surf = self.info_font.render("Made by team Бурмалда", True, (80, 100, 120))
+        self.screen.blit(footer_surf, footer_surf.get_rect(center=(self.width//2, self.height - 40)))
+
     def _draw_buttons(self):
         for i, opt in enumerate(self.menu_options):
             is_selected = (i == self.selected_index)
@@ -124,3 +128,5 @@ class MainMenu:
 
             text_surf = self.menu_font.render(display_text, True, text_color)
             self.screen.blit(text_surf, text_surf.get_rect(center=rect.center))
+
+            
