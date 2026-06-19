@@ -9,6 +9,7 @@ from core.renderer import Renderer
 from core.handler import Handler
 from core.camera import Camera 
 from core.spawner import Spawner
+from core.boss_spawner import BossSpawner
 from core.menu import MainMenu
 
 import config as cfg
@@ -23,10 +24,16 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.menu = MainMenu(self.screen)
+        self._boss_mode = False
         self._new_game()
 
-    def _new_game(self):
+    def _new_game(self, boss_mode: bool = False):
+        self._boss_mode = boss_mode
+
         self.world = World()
+        if boss_mode:
+            self.world.mod = cfg.NORMAL_MOD  # всегда светло в тест-режиме
+
         self.dungeon_generator = BSP(self.world)
         self.dungeon_generator.generate_dungeon()
 
@@ -38,7 +45,11 @@ class Game:
         self.renderer = Renderer(self.screen, self.player, self.cyber_core, self.world)
         self.handler = Handler(self.player, self.cyber_core, self.world)
         self.camera = Camera(cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
-        self.spawner = Spawner(self.world, self.dungeon_generator, self.player)
+
+        if boss_mode:
+            self.spawner = BossSpawner(self.world, self.dungeon_generator, self.player)
+        else:
+            self.spawner = Spawner(self.world, self.dungeon_generator, self.player)
         
         self.spawner.spawn_initial()  
         
@@ -46,7 +57,7 @@ class Game:
 
     def _death_player(self):
         self.renderer.draw_death_screen()
-        self._new_game()
+        self._new_game(self._boss_mode)
 
     def _update(self, dt: float):
         self.player.update(dt, self.world)   
@@ -57,7 +68,7 @@ class Game:
 
         for grenade in self.world.grenades[:]:
             grenade.update(self.world, self.camera, dt)
-  
+   
         for effect in self.world.effects[:]:
             effect.update(self.world.effects, dt)
 
@@ -86,7 +97,8 @@ class Game:
 
         self.renderer.draw(cam_x, cam_y)
 
-    def run_game(self):
+    def run_game(self, boss_mode: bool = False):
+        self._new_game(boss_mode)
         while self.running:
             dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
 
@@ -101,7 +113,10 @@ class Game:
             new_state = self.handler.menu_process_events(self)
 
             if new_state == cfg.START_GAME_BUTTON:
-                self.run_game()
+                self.run_game(boss_mode=False)
+                return
+            elif new_state == cfg.BOSS_TEST_BUTTON:
+                self.run_game(boss_mode=True)
                 return
             elif new_state == cfg.SETTINGS_BUTTON:
                 pass

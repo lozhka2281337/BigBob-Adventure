@@ -12,7 +12,8 @@ class MainMenu:
         self.height = screen.get_height()
 
         self.title_text = cfg.GAME_TITLE
-        self.menu_options = [cfg.START_GAME_BUTTON, cfg.SETTINGS_BUTTON, cfg.EXIT_BUTTON]
+        self.menu_options = [cfg.START_GAME_BUTTON, cfg.BOSS_TEST_BUTTON,
+                             cfg.SETTINGS_BUTTON, cfg.EXIT_BUTTON]
         self.current_message = ""  
 
         self.button_rects = []
@@ -33,8 +34,10 @@ class MainMenu:
         if self.selected_index == 0:
             return cfg.START_GAME_BUTTON
         elif self.selected_index == 1:
-            return cfg.SETTINGS_BUTTON
+            return cfg.BOSS_TEST_BUTTON
         elif self.selected_index == 2:
+            return cfg.SETTINGS_BUTTON
+        elif self.selected_index == 3:
             return cfg.EXIT_BUTTON
 
         return cfg.DEFAULT_MENU_BUTTON
