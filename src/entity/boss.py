@@ -8,7 +8,7 @@ from projectile.grenade import Grenade
 from projectile.effects import SparkEffect
 
 BOSS_SIZE = 64
-BOSS_HP = 2200
+BOSS_HP = 500
 BOSS_SPEED = 180
 BOSS_COLOR = (180, 0, 255)
 

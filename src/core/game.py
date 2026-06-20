@@ -6,7 +6,8 @@ from entity.cyber_core import CyberCore
 from entity.boss import Boss
 
 from core.world import World
-from core.renderer import Renderer
+from core.renderer import WorldRenderer, DarkRenderer
+from core.transition_manager import TransitionManager
 from core.handler import Handler
 from core.camera import Camera
 from core.spawner import Spawner
@@ -26,6 +27,49 @@ class Game:
         self.menu = MainMenu(self.screen)
         self._new_game()
 
+    def run_game(self):
+        while self.running:
+            dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
+
+            cam_x, cam_y = self.camera.get_offset(self.player.rect)
+
+            self.handler.game_process_events(self, self.transition_manager, cam_x, cam_y)
+            self._update(dt)
+            self._draw(cam_x, cam_y)
+
+    def run_menu(self):
+        while self.running:
+            new_state = self.handler.menu_process_events(self)
+
+            if new_state == cfg.START_GAME_BUTTON:
+                self.run_game()
+                return
+            elif new_state == cfg.SETTINGS_BUTTON:
+                pass
+            elif new_state == cfg.EXIT_BUTTON:
+                pygame.quit()
+                return
+
+            dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
+
+            self.menu.draw(dt)
+            pygame.display.flip()
+
+    
+    def spawn_boss_in_start_room(self):
+        if self.world.boss_spawned:
+            return
+        if self.world.start_room is None:
+            return
+
+        room = self.world.start_room
+        boss_x = room.centerx - 32
+        boss_y = room.centery - 32
+
+        boss = Boss(boss_x, boss_y, room)
+        self.world.enemies.append(boss)
+        self.world.boss_spawned = True
+
     def _new_game(self):
         self.world = World()
         self.dungeon_generator = BSP(self.world)
@@ -39,9 +83,11 @@ class Game:
         self.world.player = self.player
         self.world.start_room = self._find_room_by_point(player_x, player_y)
 
-        self.renderer = Renderer(self.screen, self.player, self.cyber_core, self.world)
+        self.world_renderer = WorldRenderer(self.screen, self.world, self.player, self.cyber_core)
+        self.dark_renderer = DarkRenderer(self.screen, self.world, self.player, self.cyber_core)
         self.handler = Handler(self.player, self.cyber_core, self.world)
         self.camera = Camera(cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
+        self.transition_manager = TransitionManager(self.screen, self.camera)
         self.spawner = Spawner(self.world, self.dungeon_generator, self.player)
 
         self.spawner.spawn_initial()
@@ -54,32 +100,15 @@ class Game:
                 return room
         return self.world.rooms[0] if self.world.rooms else None
 
-    def spawn_boss_in_start_room(self):
-        if self.world.boss_spawned:
-            return
-        if self.world.start_room is None:
-            return
-
-        room = self.world.start_room
-        boss_x = room.centerx - 32
-        boss_y = room.centery - 32
-
-        self.world.enemies.clear()
-        self.world.bullets.clear()
-        self.world.grenades.clear()
-        self.world.effects.clear()
-
-        boss = Boss(boss_x, boss_y, room)
-        self.world.enemies.append(boss)
-        self.world.boss_spawned = True
-
     def _death_player(self):
-        self.renderer.draw_death_screen()
+        self.world_renderer.draw_death_screen()
         self._new_game()
 
     def _update(self, dt: float):
+        self.camera.update(dt)
+        self.transition_manager.update(dt)
         self.player.update(dt, self.world)
-        self.cyber_core.update()
+        self.cyber_core.update(dt)
 
         for bullet in self.world.bullets[:]:
             bullet.update(self.world, self.player, dt)
@@ -108,37 +137,14 @@ class Game:
         if self.player.hp <= 0:
             self._death_player()
 
-    def _draw(self, cam_x, cam_y, dt):
+    def _draw(self, cam_x, cam_y):
         current_weapon = self.player.inventory.get_current()
         if hasattr(current_weapon, 'is_firing') and current_weapon.is_firing:
             self.camera.add_shake(3.0)
 
-        self.renderer.draw(cam_x, cam_y)
+        self.world_renderer.draw_world(cam_x, cam_y)
+        if self.world.mod == cfg.DARK_MOD: self.dark_renderer.draw(cam_x, cam_y)
+        self.world_renderer.draw_interface()
+        self.transition_manager.draw_flash()
 
-    def run_game(self):
-        while self.running:
-            dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
-
-            cam_x, cam_y = self.camera.get_offset(self.player.rect, dt)
-
-            self.handler.game_process_events(self, cam_x, cam_y)
-            self._update(dt)
-            self._draw(cam_x, cam_y, dt)
-
-    def run_menu(self):
-        while self.running:
-            new_state = self.handler.menu_process_events(self)
-
-            if new_state == cfg.START_GAME_BUTTON:
-                self.run_game()
-                return
-            elif new_state == cfg.SETTINGS_BUTTON:
-                pass
-            elif new_state == cfg.EXIT_BUTTON:
-                pygame.quit()
-                return
-
-            dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
-
-            self.menu.draw(dt)
-            pygame.display.flip()
+        pygame.display.flip()

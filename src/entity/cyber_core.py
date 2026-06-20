@@ -37,10 +37,11 @@ class CyberCore:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 30, 30)
         self.animation_timer = 0.0
+        self.speed_animation = 1.5
         self.particles = []  
 
-    def update(self):
-        self.animation_timer = (self.animation_timer + 0.07) % (2 * math.pi)
+    def update(self, dt):
+        self.animation_timer = (self.animation_timer + self.speed_animation * dt) % (2 * math.pi)
         
         self._spawn_particles()
         self._update_particles()
@@ -50,16 +51,15 @@ class CyberCore:
 
         pulse = math.sin(self.animation_timer) * 6
         
+        self._draw_orbital_dot(surface, cam_x, cam_y)
         self._draw_pulsating_frame(surface, cam_x, cam_y, pulse)
         self._draw_core_center(surface, cam_x, cam_y, pulse)
-        self._draw_orbital_dot(surface, cam_x, cam_y)
 
     def core_activate(self, world, player):
         if self.can_interact(player):
             world.mod = cfg.NORMAL_MOD
             world.core_activated = True
             
-
     def can_interact(self, player) -> bool:
         # Раздуваем хитбокс ядра на 40 пикселей для зоны взаимодействия
         interaction_zone = self.rect.inflate(40, 40)

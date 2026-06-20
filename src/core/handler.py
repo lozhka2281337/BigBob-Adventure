@@ -8,7 +8,7 @@ class Handler:
         self.cyber_core = cyber_core
         self.world = world
 
-    def game_process_events(self, game, camera_x: float, camera_y: float):
+    def game_process_events(self, game, transition_manager, camera_x: float, camera_y: float):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game.running = False
@@ -35,6 +35,7 @@ class Handler:
 
                         if was_dark and self.world.core_activated and not self.world.boss_spawned:
                             game.spawn_boss_in_start_room()
+                            transition_manager.trigger_transition()
 
     def menu_process_events(self, game) -> str | None:
         for event in pygame.event.get():

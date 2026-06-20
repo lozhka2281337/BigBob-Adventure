@@ -18,6 +18,8 @@ SPAWN_ENEMY_TIME = 1800
 title_font = pygame.font.SysFont("Courier New", 50, bold=True)
 menu_font = pygame.font.SysFont("Courier New", 24, bold=True)
 info_font = pygame.font.SysFont("Courier New", 20)
+arial_font = pygame.font.SysFont("Arial", 32, bold=True)
+none_font = pygame.font.SysFont(None, 32, bold=True)
 
 
 """ режимы """
@@ -27,12 +29,8 @@ DARK_MOD = "stels"
 
 """ карта """
 TILE_SIZE = 40
-COLS = 80
-ROWS = 60
  
-SURFACE_COLOR = (75, 97, 42)
 FLOOR_COLOR = (0, 0, 0)
-WALL_COLOR = (143, 0, 52)
 
 
 """ степень темноты """
