@@ -31,31 +31,42 @@ class BSPGeneration:
                 self.world.rooms.append(pixel_rect)
 
     def get_start_coord(self) -> list:
-        for y in range(cfg.MAP_HEIGHT):
-                for x in range(cfg.MAP_WIDTH):
-                    if self.world.matrix[y][x] == 0:
-                        return [x*cfg.TILE_SIZE, y*cfg.TILE_SIZE]
-                    
-    def get_cyber_core_coord(self, player_x, player_y) -> list:
-        best_room = None
-        max_distance_sq = -1
-
-        # Перебираем все сгенерированные BSP-деревья, где есть комнаты
         for leaf in self.leafs:
             if leaf.room is not None:
-                room_center_x = (leaf.room.x + leaf.room.width // 2) * cfg.TILE_SIZE
-                room_center_y = (leaf.room.y + leaf.room.height // 2) * cfg.TILE_SIZE
+                x = (leaf.room.x + leaf.room.width // 2) * cfg.TILE_SIZE 
+                y = (leaf.room.y + leaf.room.height // 2) * cfg.TILE_SIZE 
 
-                dx = room_center_x - player_x
-                dy = room_center_y - player_y
-                distance_sq = dx**2 + dy**2
+                return [x, y]
 
-                # Ищем самую далекую комнату
-                if distance_sq > max_distance_sq:
-                    max_distance_sq = distance_sq
-                    best_room = (room_center_x, room_center_y)
-        
-        return list(best_room)
+    def get_cyber_core_coord(self, player_x, player_y) -> list:
+        # поиск координат для ядра через BFS
+
+        best_x = player_x // cfg.TILE_SIZE
+        best_y = player_y // cfg.TILE_SIZE
+        best_d = 0
+
+        queue = [[best_x, best_y, best_d]]
+        visited = [[False for _ in range(cfg.MAP_WIDTH)] for _ in range(cfg.MAP_HEIGHT)]
+        visited[best_y][best_x] = True
+
+        while queue:
+            x, y, d = queue.pop(0)
+
+            if d > best_d:
+                best_x = x
+                best_y = y
+                best_d = d
+
+            neib = [[x+1, y], [x-1, y], [x, y+1], [x, y-1]]
+            for nx, ny in neib:
+                if 0 <= ny < cfg.MAP_HEIGHT and 0 <= nx < cfg.MAP_WIDTH: 
+                    if not visited[ny][nx] and self.world.matrix[ny][nx] == 0:
+                        visited[ny][nx] = True
+                        queue.append([nx, ny, d+1])
+
+        center_x, center_y = self._get_center_coord_by_room(best_x, best_y)
+
+        return [center_x*cfg.TILE_SIZE, center_y*cfg.TILE_SIZE]
 
     def get_random_floor_coords(self, count):
         floors = []
@@ -88,6 +99,15 @@ class BSPGeneration:
                         runSplit = True
 
         root.create_rooms()
+
+    def _get_center_coord_by_room(self, x, y) -> list:
+        # поиск середины комнаты по координатам
+        for leaf in self.leafs:
+            if leaf.room is not None:
+                if leaf.room.x <= x <= leaf.room.x+leaf.room.width:
+                    if leaf.room.y <= y <= leaf.room.y+leaf.room.height:
+                        return [leaf.room.x + leaf.room.width // 2, leaf.room.y + leaf.room.height // 2]
+        return [x, y]
 
     def _init_matrix(self):
         self.world.matrix = [[1 for _ in range(cfg.MAP_WIDTH)] for _ in range(cfg.MAP_HEIGHT)]
