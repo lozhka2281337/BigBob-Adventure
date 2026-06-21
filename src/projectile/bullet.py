@@ -1,7 +1,6 @@
 import pygame
 
 from .effects import SparkEffect
-
 from config import BULLET_SIZE
 
 class Bullet:
@@ -72,9 +71,9 @@ class Bullet:
             if self.rect.colliderect(enemy.rect):
                 self._bullet_death(world)
 
-                if hasattr(enemy, "apply_bullet_damage"):
-                    enemy.apply_bullet_damage(self.damage)
-                else:
+                try:
+                    enemy.get_damage(self.damage, damage_type="bullet", source="player")
+                except TypeError:
                     enemy.get_damage(self.damage)
 
                 push_dir = pygame.math.Vector2(self.direction.x, self.direction.y)

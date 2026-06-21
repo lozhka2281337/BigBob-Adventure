@@ -28,7 +28,7 @@ MELEE_DAMAGE = 2
 DASH_DURATION = 0.25
 DASH_COOLDOWN = {1: 5.0, 2: 4.0, 3: 3.0}
 DASH_SPEED = {1: 500, 2: 550, 3: 700}
-SUMMON_DURATION = 3.5
+SUMMON_DURATION = 2.0
 
 PREFERRED_MIN_DIST = 180
 PREFERRED_MAX_DIST = 350
@@ -45,9 +45,8 @@ LASER_COLOR = {1: (0, 200, 255), 2: (255, 150, 0), 3: (255, 50, 50)}
 BOSS_CONTACT_DAMAGE = 2
 BOSS_BULLET_DAMAGE = 10
 BOSS_GRENADE_DAMAGE = 45
-BOSS_LASER_TICK_DAMAGE = 8
+BOSS_LASER_TICK_DAMAGE = 12
 BOSS_MELEE_DAMAGE = 90
-BOSS_SELF_GRENADE_IMMUNITY_TIME = 1.0
 
 
 class BossPhase(Enum):
@@ -103,52 +102,46 @@ class Boss(Enemy):
         self._cam_x = 0.0
         self._cam_y = 0.0
 
-        self._font_small = pygame.font.SysFont("Courier New", 12, bold=True)
         self._font_phase = pygame.font.SysFont("Courier New", 14, bold=True)
 
-        self.last_grenade_throw_time = -9999.0
         self.last_laser_hit_time = -9999.0
         self.last_player_melee_hit_time = -9999.0
 
-    def get_damage(self, damage: int) -> None:
+    def get_damage(self, damage: int, damage_type="default", source="player") -> None:
         if self.is_invulnerable:
             return
+
+        if damage_type == "grenade":
+            if source == "boss":
+                return
+            self.hp -= BOSS_GRENADE_DAMAGE
+            return
+
+        if damage_type == "laser":
+            now = pygame.time.get_ticks() / 1000.0
+            if now - self.last_laser_hit_time < 0.25:
+                return
+            self.last_laser_hit_time = now
+            self.hp -= BOSS_LASER_TICK_DAMAGE
+            return
+
+        if damage_type == "melee":
+            now = pygame.time.get_ticks() / 1000.0
+            if now - self.last_player_melee_hit_time < 0.25:
+                return
+            self.last_player_melee_hit_time = now
+            self.hp -= BOSS_MELEE_DAMAGE
+            return
+
+        if damage_type == "bullet":
+            self.hp -= min(damage, BOSS_BULLET_DAMAGE)
+            return
+
         self.hp -= damage
-
-    def apply_bullet_damage(self, damage: int) -> None:
-        if self.is_invulnerable:
-            return
-        self.hp -= min(damage, BOSS_BULLET_DAMAGE)
-
-    def apply_laser_damage(self) -> None:
-        if self.is_invulnerable:
-            return
-        now = pygame.time.get_ticks() / 1000.0
-        if now - self.last_laser_hit_time < 0.35:
-            return
-        self.last_laser_hit_time = now
-        self.hp -= BOSS_LASER_TICK_DAMAGE
-
-    def apply_grenade_damage(self) -> None:
-        if self.is_invulnerable:
-            return
-        now = pygame.time.get_ticks() / 1000.0
-        if now - self.last_grenade_throw_time < BOSS_SELF_GRENADE_IMMUNITY_TIME:
-            return
-        self.hp -= BOSS_GRENADE_DAMAGE
-
-    def apply_melee_damage(self) -> None:
-        if self.is_invulnerable:
-            return
-        now = pygame.time.get_ticks() / 1000.0
-        if now - self.last_player_melee_hit_time < 0.25:
-            return
-        self.last_player_melee_hit_time = now
-        self.hp -= BOSS_MELEE_DAMAGE
 
     def update(self, world, player, dt: float) -> None:
         self._walls = world.walls
-        self._check_phase_transition(world, player)
+        self._check_phase_transition()
         self._tick_boss_fsm(world, player, dt)
         self._decay_knockback(dt)
 
@@ -173,7 +166,7 @@ class Boss(Enemy):
 
         self._draw_hp_bar(surface, offset, color)
 
-        label = self._font_phase.render(f"ROOT-KIT  [P{phase_n}]", True, color)
+        label = self._font_phase.render(f"ROOT-KIT [P{phase_n}]", True, color)
         surface.blit(label, (offset.centerx - label.get_width() // 2, offset.top - 24))
 
         if self.boss_state == BossState.ATTACK_MELEE:
@@ -181,7 +174,7 @@ class Boss(Enemy):
         elif self.boss_state in (BossState.ATTACK_LASER_CHARGE, BossState.ATTACK_LASER_FIRE):
             self._draw_laser_visual(surface, offset, phase_n)
 
-    def _check_phase_transition(self, world, player) -> None:
+    def _check_phase_transition(self) -> None:
         phase_n = self.phase.value
         hp_ratio = self.hp / self.max_hp
 
@@ -197,32 +190,30 @@ class Boss(Enemy):
         elif phase_n == 2 and hp_ratio < PHASE3_HP_RATIO and not self.phase3_triggered:
             self.phase3_triggered = True
             self.phase = BossPhase.PHASE3
+            self.attack_cooldown = 1.0
 
     def _tick_boss_fsm(self, world, player, dt: float) -> None:
-        s = self.boss_state
-
-        if s == BossState.CHASE_KITE:
+        if self.boss_state == BossState.CHASE_KITE:
             self._tick_chase_kite(world, player, dt)
-        elif s == BossState.ATTACK_GRENADE:
+        elif self.boss_state == BossState.ATTACK_GRENADE:
             self._tick_attack_grenade(world, player, dt)
-        elif s == BossState.ATTACK_MELEE:
+        elif self.boss_state == BossState.ATTACK_MELEE:
             self._tick_attack_melee(world, player, dt)
-        elif s == BossState.ATTACK_LASER_CHARGE:
+        elif self.boss_state == BossState.ATTACK_LASER_CHARGE:
             self._tick_laser_charge(world, player, dt)
-        elif s == BossState.ATTACK_LASER_FIRE:
+        elif self.boss_state == BossState.ATTACK_LASER_FIRE:
             self._tick_laser_fire(world, player, dt)
-        elif s == BossState.DASH:
+        elif self.boss_state == BossState.DASH:
             self._tick_dash(world, player, dt)
-        elif s == BossState.SUMMON:
-            self._tick_summon(world, player, dt)
+        elif self.boss_state == BossState.SUMMON:
+            self._tick_summon(world, dt)
 
     def _tick_chase_kite(self, world, player, dt: float) -> None:
-        phase_n = self.phase.value
         dist = self.pos.distance_to(player.pos)
 
         self.attack_cooldown -= dt
         if self.attack_cooldown <= 0:
-            self._pick_attack(dist, phase_n, world, player)
+            self._pick_attack(dist, self.phase.value, world, player)
             return
 
         self.dash_cooldown -= dt
@@ -259,15 +250,18 @@ class Boss(Enemy):
     def _pick_attack(self, dist: float, phase_n: int, world, player) -> None:
         has_los = self.check_los(player.rect, self._walls)
 
+        melee_chance = max(0.2, 0.5 - (phase_n - 1) * 0.15)
+        laser_chance = max(0.3, 0.6 - (phase_n - 1) * 0.15)
+
         if dist < 130:
             self._enter_melee(player)
         elif dist < 300 and has_los:
-            if random.random() < 0.5:
+            if random.random() < melee_chance:
                 self._enter_melee(player)
             else:
                 self._enter_grenade(world, player)
         elif has_los:
-            if random.random() < 0.6:
+            if random.random() < laser_chance:
                 self._enter_laser_charge(player)
             else:
                 self._enter_grenade(world, player)
@@ -276,14 +270,19 @@ class Boss(Enemy):
 
     def _enter_grenade(self, world, player) -> None:
         grenade = Grenade(
-            self.rect.centerx, self.rect.centery,
-            player.rect.centerx, player.rect.centery,
-            GRENADE_SPEED, GRENADE_COLOR,
-            GRENADE_BLAST_R, GRENADE_FUSE, GRENADE_MAX_RANGE
+            self.rect.centerx,
+            self.rect.centery,
+            player.rect.centerx,
+            player.rect.centery,
+            GRENADE_SPEED,
+            GRENADE_COLOR,
+            GRENADE_BLAST_R,
+            GRENADE_FUSE,
+            GRENADE_MAX_RANGE,
+            owner="boss",
+            damage=2
         )
         world.grenades.append(grenade)
-        self.last_grenade_throw_time = pygame.time.get_ticks() / 1000.0
-
         self.boss_state = BossState.ATTACK_GRENADE
         self.attack_timer = 0.5
 
@@ -407,7 +406,7 @@ class Boss(Enemy):
             self.dash_cooldown = DASH_COOLDOWN[phase_n]
             self.boss_state = BossState.CHASE_KITE
 
-    def _tick_summon(self, world, player, dt: float) -> None:
+    def _tick_summon(self, world, dt: float) -> None:
         center = pygame.math.Vector2(self.room.center)
         dist_to_center = self.pos.distance_to(center)
 
@@ -415,18 +414,21 @@ class Boss(Enemy):
             if dist_to_center > 20:
                 direction = (center - self.pos).normalize()
                 self.move(world.walls, dt, direction)
+                return
             else:
                 self.summon_at_center = True
                 self.is_invulnerable = True
-        else:
-            if not self.minions_spawned:
-                self._spawn_minions(world)
-                self.minions_spawned = True
 
-            self.summon_timer -= dt
-            if self.summon_timer <= 0:
-                self.is_invulnerable = False
-                self._reset_to_chase()
+        if not self.minions_spawned:
+            self._spawn_minions(world)
+            self.minions_spawned = True
+
+        self.summon_timer -= dt
+        if self.summon_timer <= 0:
+            self.is_invulnerable = False
+            self.summon_at_center = False
+            self.minions_spawned = False
+            self._reset_to_chase()
 
     def _spawn_minions(self, world) -> None:
         from .enemy_type import Swarm, Tank, Shooter

@@ -33,7 +33,8 @@ class GrenadeLauncher(Weapon):
             self.blast_radius,
             self.fuse_time,
             self.max_range,
-            owner="player"
+            owner="player",
+            damage=self.damage
         )
 
         world.grenades.append(grenade)

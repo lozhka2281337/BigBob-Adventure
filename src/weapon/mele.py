@@ -57,9 +57,9 @@ class Melee(Weapon):
                     angle_diff = (angle_to_enemy - self.locked_angle + 180) % 360 - 180
 
                     if abs(angle_diff) <= self.arc_degrees / 2:
-                        if hasattr(enemy, "apply_melee_damage"):
-                            enemy.apply_melee_damage()
-                        else:
+                        try:
+                            enemy.get_damage(150, damage_type="melee", source="player")
+                        except TypeError:
                             enemy.get_damage(150)
 
                         push_dir = enemy_pos - start_pos

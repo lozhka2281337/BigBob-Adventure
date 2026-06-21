@@ -76,9 +76,9 @@ class Laser(Weapon):
 
             for enemy in enemies[:]:
                 if enemy.rect.clipline(start_pos, end_pos):
-                    if hasattr(enemy, "apply_laser_damage"):
-                        enemy.apply_laser_damage()
-                    else:
+                    try:
+                        enemy.get_damage(self.damage, damage_type="laser", source="player")
+                    except TypeError:
                         enemy.get_damage(self.damage)
 
                     enemy.knockback += self.locked_dir * 30
