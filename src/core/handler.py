@@ -29,6 +29,18 @@ class Handler:
                 if event.key == pygame.K_q:
                     self.player.ping(self.world)
 
+                #быстрый доступ оружия
+                if event.key == pygame.K_1:
+                    self.player.inventory.set_weapon(0)
+                if event.key == pygame.K_2:
+                    self.player.inventory.set_weapon(1)
+                if event.key == pygame.K_3:
+                    self.player.inventory.set_weapon(2)
+                if event.key == pygame.K_4:
+                    self.player.inventory.set_weapon(3)
+                if event.key == pygame.K_5:
+                    self.player.inventory.set_weapon(4)
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4:
                     self.player.switch_weapon(forward=False)

@@ -24,6 +24,11 @@ class Inventory:
     def prev_weapon(self):
         self.current_idx = (self.current_idx - 1) % len(self.weapons)
 
+    def set_weapon(self, index):
+        """ Установка оружия по индексу """
+        if 0 <= index < len(self.weapons):
+            self.current_idx = index
+
     def update_all(self):
         for weapon in self.weapons:
             weapon.update()

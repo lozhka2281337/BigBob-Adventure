@@ -92,21 +92,31 @@ class WorldRenderer:
             self.screen.blit(self.hp_sprite, (x, y))
 
     def _draw_weapon_hud(self):
-        start_x = cfg.SCREEN_WIDTH * 0.90
-        start_y = cfg.SCREEN_HEIGHT * 0.75
+        start_x = cfg.SCREEN_WIDTH - 30
+        start_y = cfg.SCREEN_HEIGHT - 40
+        line_height = 40
+
+        ticks = pygame.time.get_ticks()
+        blink = (ticks // 500) % 2 == 0
 
         for i in range(len(self.player.inventory.weapons)):
             weapon = self.player.inventory.weapons[i]
             is_active = (i == self.player.inventory.current_idx)
-            offset_y = (i - self.player.inventory.current_idx) * -35
-            w_color = getattr(weapon, 'b_color', getattr(weapon, 'color', (255, 255, 255)))
+
+            y = start_y - (i * line_height)
 
             if is_active:
-                text_surf = cfg.arial_font.render(f"> {weapon.name}", True, w_color)
+                text = f"> {i + 1}. {weapon.name}"
+                color = cfg.WHITE if blink else cfg.COLOR_NEON_BLUE
             else:
-                text_surf = cfg.arial_font.render(weapon.name, True, (120, 120, 120))
-                text_surf.set_alpha(150)
-            self.screen.blit(text_surf, (start_x, start_y + offset_y))
+                text = f"{i + 1}. {weapon.name}"
+                color = cfg.COLOR_NEON_BLUE
+
+            #рендерим текст и выравниваем по правому углу
+            text_surf = cfg.arial_font.render(text, True, color)
+            x = start_x - text_surf.get_width()
+
+            self.screen.blit(text_surf, (x, y))
 
     def _draw_weapon(self, cam_x, cam_y):
         weapon = self.player.inventory.get_current()
