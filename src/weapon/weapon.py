@@ -1,9 +1,7 @@
-from abc import ABC, abstractmethod
-
 import pygame
 
 
-class Weapon(ABC):
+class Weapon:
     def __init__(self, name, damage, radius, clip, shot_delay):
         self.name = name          
         self.damage = damage
@@ -25,18 +23,14 @@ class Weapon(ABC):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         return pygame.math.Vector2(mouse_x + camera_x, mouse_y + camera_y)
 
-    @abstractmethod
     def shot(self, player_pos, camera_x: float, camera_y: float, world) -> None:
         raise NotImplementedError
 
-    @abstractmethod
     def update(self):
-        raise NotImplementedError
+        return None
 
-    @abstractmethod
     def process_damage(self, enemies, player_rect, walls):
-        raise NotImplementedError
+        return None
 
-    @abstractmethod
     def draw(self, surface, camera_x, camera_y, player_rect, walls):
-        raise NotImplementedError
+        return None
