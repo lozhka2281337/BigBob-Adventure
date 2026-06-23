@@ -31,7 +31,7 @@ class Game:
         self._new_game()
 
     def run_intro(self):
-        self.audio_manager.play_bgm(cfg.MENU_MUSIC)
+        self.audio_manager.play_bgm(cfg.INTRO_MUSIC)
 
         while self.running:
             events = pygame.event.get()
@@ -48,6 +48,8 @@ class Game:
 
 
     def run_game(self):
+        self.audio_manager.play_bgm(cfg.DARK_MUSIC)
+
         while self.running:
             dt = min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
             cam_x, cam_y = self.camera.get_offset(self.player.rect)

@@ -24,9 +24,10 @@ none_font = pygame.font.SysFont(None, 32, bold=True)
 
 
 """ музыка """
-MENU_MUSIC = "music/Crowbar_-_To_Touch_The_Hand_Of_God_(SkySound.cc).mp3"
+MENU_MUSIC = "music/The_Browning-EndOfExistence.mp3"
+INTRO_MUSIC = "music/80_s-Computer-Interface.mp3"
 ACTION_MUSIC = "music/doom_02.Rip_and_Tear.mp3"
-
+DARK_MUSIC = "music/MartinStigAndersenSGunverRyberg-Submarine.mp3"
 
 """ состояния игры """
 NORMAL_MOD = "normal"
