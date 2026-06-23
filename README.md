@@ -1,3 +1,7 @@
+![Language](https://img.shields.io/badge/language-Python-blue.svg)
+
+# CYBER_PUC: 2067 
+
 ## 📁 Структура проекта
 ```text
 ├──src/
@@ -13,11 +17,6 @@
 ├── .gitignore/
 └── README.md/
 ```
-
-# CYBER_PUC: 2067 
-
-[![Python](https://shields.io)](https://python.org)
-[![Pygame](https://shields.io)](https://pygame.org)
 
 Добро пожаловать в **CYBER_PUC: 2067** - простенький, но брутальный шутер с элементами roguelike в сеттинге киберпанка. Вам предстоит взять под контроль боевого киборга, взломать систему изнутри и сжечь корпорацию дотла.
 
