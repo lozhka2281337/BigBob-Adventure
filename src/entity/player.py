@@ -50,6 +50,41 @@ class Player:
             self.hp -= damage
             self.invulnerable_timer = 3.0
 
+    def update(self, dt: float, world): 
+        keys = pygame.key.get_pressed()
+        direction = pygame.math.Vector2(0, 0)
+
+        if keys[pygame.K_w] or keys[pygame.K_UP]: direction.y -= 1
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]: direction.y += 1
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]: direction.x -= 1
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: direction.x += 1
+        
+        self.inventory.update_all()
+
+        self._movement(direction, dt, world.walls)
+        self._check_enemy_collisions(world.enemies)
+
+        self._update_sprite(direction, dt)
+
+        self._update_ping_timer(dt)
+        self._update_shield_timer(dt)
+
+    def draw(self, surface: pygame.Surface, cam_x: float, cam_y: float):
+        screen_x = self.rect.x - cam_x
+        screen_y = self.rect.y - cam_y
+        
+        frame = self.anim.get_frame(self.flip_x)
+        
+        center_x = screen_x + self.rect.width // 2
+        center_y = screen_y + self.rect.height // 2
+        
+        # Центруем ее по хитбоксу 
+        frame_rect = frame.get_rect(center=(center_x, center_y))
+        
+        surface.blit(frame, frame_rect)
+
+        if self.invulnerable_timer > 0: self._draw_shield(surface, screen_x, screen_y)
+
     def _movement(self, direction: pygame.math.Vector2, dt: float, walls: list):
         """ двигаем игрока:
         1) нормализация
@@ -102,40 +137,6 @@ class Player:
             self.anim.update(dt) 
         else:
             self.anim.current_idx = 0 
-
-    def update(self, dt: float, world): 
-        keys = pygame.key.get_pressed()
-        direction = pygame.math.Vector2(0, 0)
-
-        if keys[pygame.K_w] or keys[pygame.K_UP]: direction.y -= 1
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]: direction.y += 1
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]: direction.x -= 1
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: direction.x += 1
-        
-        self._movement(direction, dt, world.walls)
-        self._check_enemy_collisions(world.enemies)
-        self.inventory.update_all()
-
-        self._update_sprite(direction, dt)
-
-        self._update_ping_timer(dt)
-        self._update_shield_timer(dt)
-
-    def draw(self, surface: pygame.Surface, cam_x: float, cam_y: float):
-        screen_x = self.rect.x - cam_x
-        screen_y = self.rect.y - cam_y
-        
-        frame = self.anim.get_frame(self.flip_x)
-        
-        center_x = screen_x + self.rect.width // 2
-        center_y = screen_y + self.rect.height // 2
-        
-        # Центруем ее по хитбоксу 
-        frame_rect = frame.get_rect(center=(center_x, center_y))
-        
-        surface.blit(frame, frame_rect)
-
-        if self.invulnerable_timer > 0: self._draw_shield(surface, screen_x, screen_y)
 
     def _draw_shield(self, surface: pygame.Surface, screen_x: float, screen_y: float):
         pulse = math.sin(pygame.time.get_ticks() * 0.01) * 5  

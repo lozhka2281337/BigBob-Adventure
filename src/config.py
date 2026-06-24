@@ -30,6 +30,7 @@ ACTION_MUSIC = "music/doom_02.Rip_and_Tear.mp3"
 DARK_MUSIC = "music/MartinStigAndersenSGunverRyberg-Submarine.mp3"
 
 """ состояния игры """
+BOSS_MOD = "boss"
 NORMAL_MOD = "normal"
 DARK_MOD = "stels"
 INTRO_MOD = "intro"

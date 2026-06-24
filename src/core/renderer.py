@@ -40,8 +40,8 @@ class WorldRenderer:
         for grenade in self.world.grenades:
             grenade.draw(self.screen, cam_x, cam_y)
 
+        if self.world.mod != cfg.BOSS_MOD: self.cyber_core.draw(self.screen, cam_x, cam_y)
         self.elevator.draw(self.screen, cam_x, cam_y)
-        self.cyber_core.draw(self.screen, cam_x, cam_y)
         self.player.draw(self.screen, cam_x, cam_y)
 
         for enemy in self.world.enemies:
@@ -65,6 +65,8 @@ class WorldRenderer:
         pygame.time.wait(3000)
 
     def init_map_surface(self):
+        self.map_surface = pygame.Surface((cfg.MAP_WIDTH * cfg.TILE_SIZE, cfg.MAP_HEIGHT * cfg.TILE_SIZE), pygame.SRCALPHA)
+
         for y in range(cfg.MAP_HEIGHT):
             for x in range(cfg.MAP_WIDTH):
                 if self.world.matrix[y][x] == 0:

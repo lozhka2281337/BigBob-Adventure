@@ -1,6 +1,8 @@
 import pygame
 
 from dungeon.BSP.BSP_generation import BSPGeneration as BSP
+from dungeon.boos_arena import BossArena
+
 from entity.player import Player
 from entity.cyber_core import CyberCore
 from entity.elevator import Elevator
@@ -110,16 +112,17 @@ class Game:
 
         player_x, player_y = self.dungeon_generator.get_start_coord()
         core_x, core_y = self.dungeon_generator.get_cyber_core_coord(player_x, player_y)
-
+        
         self.cyber_core = CyberCore(core_x, core_y)
-        self.player = Player(player_x, player_y)
+        self.player = Player(player_x + 100, player_y)
         self.elevator = Elevator(player_x, player_y)
         self.world.start_room = self.dungeon_generator.find_room_by_point(player_x, player_y)
 
         self.world_renderer = WorldRenderer(self.screen, self.world, self.player, self.elevator, self.cyber_core)
         self.dark_renderer = DarkRenderer(self.screen, self.world, self.player, self.cyber_core)
         self.handler = Handler(self, self.player, self.cyber_core, self.world)
-        
+        self.boss_arena = BossArena(self.world)
+
         self.spawner = Spawner(self.world, self.dungeon_generator, self.player)
 
         self.spawner.spawn_initial()
@@ -136,7 +139,7 @@ class Game:
         self.transition_manager.update(dt)
         self.player.update(dt, self.world)
         self.elevator.update()
-        self.cyber_core.update(dt)
+        if self.cyber_core: self.cyber_core.update(dt)
 
         for bullet in self.world.bullets[:]:
             bullet.update(self.world, self.player, dt)
@@ -160,6 +163,24 @@ class Game:
 
         if self.player.hp <= 0:
             self._death_player()
+
+        if self.elevator.check_trigger(self.player) and self.world.mod != cfg.BOSS_MOD:
+            self._start_second_level()
+
+    def _start_second_level(self):
+        self.world.mod = cfg.BOSS_MOD
+
+        self.cyber_core = None
+
+        self.world.clear_map()
+
+        self.player.pos.x = (cfg.MAP_WIDTH // 2 * cfg.TILE_SIZE) - self.player.rect.width // 2
+        self.player.pos.y = (cfg.MAP_WIDTH // 2 * cfg.TILE_SIZE) - self.player.rect.height // 2 + 15 * cfg.TILE_SIZE
+        self.elevator.rect.x = self.player.pos.x
+        self.elevator.rect.y = self.player.pos.y
+
+        self.boss_arena.create_arena()
+        self.world_renderer.init_map_surface()
 
     def _draw(self, cam_x, cam_y):
         current_weapon = self.player.inventory.get_current()
