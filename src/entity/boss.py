@@ -149,10 +149,6 @@ class Boss(Enemy):
         frame_rect.y += BOSS_SPRITE_OFFSET_Y
         surface.blit(frame, frame_rect)
 
-        pygame.draw.rect(surface, color, offset, 2)
-
-        self._draw_corner_brackets(surface, offset, color)
-
         if self.is_invulnerable:
             pulse = int(abs(math.sin(pygame.time.get_ticks() * 0.008)) * 8)
             shield_rect = offset.inflate(pulse * 2 + 6, pulse * 2 + 6)
