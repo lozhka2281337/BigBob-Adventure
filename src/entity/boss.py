@@ -3,13 +3,13 @@ import random
 import math
 from enum import Enum, auto
 
+from core.animation import Animation
 from .enemy import Enemy, EnemyState
 from projectile.grenade import Grenade
 from projectile.effects import SparkEffect
 from combat.damage import DamageSource, DamageType
 
 import config as cfg
-
 
 class BossPhase(Enum):
     PHASE1 = 1
@@ -32,6 +32,8 @@ class Boss(Enemy):
         super().__init__(x, y, cfg.BOSS_HP, cfg.BOSS_SPEED, room)
         self.rect = pygame.Rect(x, y, cfg.BOSS_SIZE, cfg.BOSS_SIZE)
         self.pos = pygame.math.Vector2(x, y)
+        self.anim_run = Animation("assets/boss-run-leftpng.png", columns=6, speed=cfg.BOSS_ANIMATION_SPEED, scale=cfg.BOSS_SPRITE_SCALE)
+        self.flip_x = False
 
         self.max_hp = cfg.BOSS_HP
         self.damage = cfg.BOSS_CONTACT_DAMAGE
@@ -110,6 +112,16 @@ class Boss(Enemy):
         self._tick_boss_fsm(world, player, dt)
         self._decay_knockback(dt)
 
+        if player.rect.centerx > self.rect.centerx:
+            self.flip_x = True
+        elif player.rect.centerx < self.rect.centerx:
+            self.flip_x = False
+
+        if self.is_moving:
+            self.anim_run.update(dt)
+        else:
+            self.anim_run.current_idx = 0
+
     def draw(self, surface: pygame.Surface, cam_x: float, cam_y: float) -> None:
         self._cam_x = cam_x
         self._cam_y = cam_y
@@ -118,11 +130,11 @@ class Boss(Enemy):
         color = cfg.BOSS_PHASE_COLOR[phase_n]
         offset = self.rect.move(-cam_x, -cam_y)
 
-        inner = tuple(max(0, c // 3) for c in color)
-        pygame.draw.rect(surface, inner, offset)
-        pygame.draw.rect(surface, color, offset, 3)
-
-        self._draw_corner_brackets(surface, offset, color)
+        frame = self.anim_run.get_frame(self.flip_x)
+        frame_rect = frame.get_rect(center=offset.center)
+        frame_rect.x += cfg.BOSS_SPRITE_OFFSET_X
+        frame_rect.y += cfg.BOSS_SPRITE_OFFSET_Y
+        surface.blit(frame, frame_rect)
 
         if self.is_invulnerable:
             pulse = int(abs(math.sin(pygame.time.get_ticks() * 0.008)) * 8)
