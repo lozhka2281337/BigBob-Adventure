@@ -20,13 +20,13 @@ class EnemyState(Enum):
 
 
 class Enemy:
-    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple, room: pygame.Rect):
+    def __init__(self, x: int, y: int, hp: int, speed: int, room: pygame.Rect):
         self.pos = pygame.math.Vector2(x, y)
         self.rect = pygame.Rect(x, y, ENEMY_SIZE, ENEMY_SIZE)       
         self.hp = hp
         self.speed = speed
         self.base_speed = float(speed)
-        self.color = color
+        
         self.damage = 1
         self.base_damage = 1
         self.room = room 
@@ -358,8 +358,8 @@ class Enemy:
 
 
 class AnimatedEnemy(Enemy):
-    def __init__(self, x: int, y: int, hp: int, speed: int, color: tuple, room: pygame.Rect):
-        super().__init__(x, y, hp, speed, color, room)
+    def __init__(self, x: int, y: int, hp: int, speed: int, room: pygame.Rect):
+        super().__init__(x, y, hp, speed, room)
         self.anim_left = None
         self.anim_right = None
         self.current_anim = None

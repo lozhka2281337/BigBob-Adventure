@@ -19,22 +19,14 @@ class Terminal:
         self.char_speed = 40
         self.line_delay = 1000  
         self.next_action_time = 0  
-        self.skip_requested = False
 
     def start(self):
         self.lines_to_draw = []
         self.current_line_idx = 0
         self.current_char_idx = 0
         self.next_action_time = pygame.time.get_ticks() + 200
-        self.skip_requested = False
-
-    def skip(self):
-        self.skip_requested = True
 
     def update(self, audio_manager) -> bool:
-        if self.skip_requested:
-            return True
-
         current_time = pygame.time.get_ticks()
 
         if current_time >= self.next_action_time:
@@ -47,7 +39,7 @@ class Terminal:
                 self._update_line_end(current_full_line, current_time)
             else:
                 if self.script == cfg.SCRIPT_WIN: 
-                    if not audio_manager.bmg_is_playing():
+                    if not audio_manager.bgm_is_playing():
                         return False
                 else: return False
                 
@@ -99,7 +91,7 @@ class Terminal:
     def _draw_lines(self, start_y, line_height):
         for i, (line_text, color_type) in enumerate(self.lines_to_draw):
             current_color = self._get_color(color_type)
-            text_surf = cfg.font_terminal.render(line_text, True, current_color)
+            text_surf = cfg.terminal_font.render(line_text, True, current_color)
             self.screen.blit(text_surf, (100, start_y + i * line_height))
 
     def _draw_cursor(self, start_y, line_height):    
@@ -107,6 +99,6 @@ class Terminal:
             last_text, color_type = self.lines_to_draw[-1]
             current_color = self._get_color(color_type)
             
-            cursor_surf = cfg.font_terminal.render("_", True, current_color)
-            text_width = cfg.font_terminal.size(last_text)[0]
+            cursor_surf = cfg.terminal_font.render("_", True, current_color)
+            text_width = cfg.terminal_font.size(last_text)[0]
             self.screen.blit(cursor_surf, (100 + text_width, start_y + (len(self.lines_to_draw) - 1) * line_height))

@@ -10,26 +10,22 @@ class Handler:
         self.player = player
         self.cyber_core = cyber_core
 
-    def intro_process_events(self, ):
+    def intro_process_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit(0)
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_ESCAPE):
                     self.game.running = False
-                if event.key in (pygame.K_SPACE, pygame.K_RETURN):
-                    if hasattr(self.game, "terminal") and self.game.terminal:
-                        self.game.terminal.skip()
 
     def game_process_events(self, camera_x: float, camera_y: float):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.game.running = False
 
-            if self.game.paused: self._process_pause_event(event)
-            else: self._process_event(event, camera_x, camera_y)
+            self._process_event(event, camera_x, camera_y)
 
     def menu_process_events(self):
         for event in pygame.event.get():
@@ -83,9 +79,9 @@ class Handler:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 4:
-                self.player.switch_weapon(forward=False, world=self.game.world)
+                self.player.switch_weapon(forward=True)
             if event.button == 5:
-                self.player.switch_weapon(forward=True, world=self.game.world)
+                self.player.switch_weapon(forward=False)
             if event.button == 1:
                 self.player.shot(camera_x, camera_y, self.game.world)
 
@@ -95,21 +91,5 @@ class Handler:
                     if self.cyber_core and self.cyber_core.core_activate(self.player):
                         self.game.set_normal_mod()
                         self.game.transition_manager.trigger_transition()
+                        self.player.update_target(cfg.DESTROY_TARGET_MES)
 
-    def _process_pause_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.game.paused = False
-
-        button = self.game.pause_menu.handle_event(event)
-        
-        if button == cfg.CONTINUE_BUTTON:
-            self.game.paused = False
-        elif button == cfg.SETTINGS_BUTTON:
-            self.game.pause_menu.state_change(cfg.SETTINGS_BUTTON)
-        elif button == cfg.VOLUME_BUTTON:
-            self.game.pause_menu.update_volume(event)
-            self.game.audio_manager.set_bgm_volume(self.game.volume / 100)
-        elif button == cfg.BACK_BUTTON:
-            self.game.pause_menu.state_change(cfg.BACK_BUTTON)
-        elif button == cfg.EXIT_BUTTON:
-            self.game.running = False

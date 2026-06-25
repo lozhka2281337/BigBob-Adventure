@@ -11,8 +11,7 @@ class Player:
     def __init__(self, x: int, y: int):
         self.pos = pygame.math.Vector2(x, y)
         self.rect = pygame.Rect(x, y, cfg.PLAYER_SIZE, cfg.PLAYER_SIZE)
-        self.speed = cfg.PLAYER_SPEED
-        self.color = cfg.PLAYER_COLOR
+        self.speed = cfg.PLAYER_LOW_SPEED
         self.hp = cfg.PLAYER_HP
 
         self.inventory = Inventory()
@@ -20,41 +19,21 @@ class Player:
         self.anim = Animation("assets/main-Sheet.png", columns=6, speed=0.07, scale=1.5)
         self.flip_x = True 
 
+        self.target_mes = cfg.CORE_TARGET_MES
         self.invulnerable_timer = 0 # таймер для щита бессмертия, появляющийся после получения урона
         self.ping_timer = 0
         self.score = 0
-    
-    def _scanner_only_mode(self, world) -> bool:
-        return world.mod == cfg.DARK_MOD and not world.core_activated
 
-    def _enforce_weapon_restriction(self, world) -> None:
-        if self._scanner_only_mode(world):
-            self.inventory.set_weapon(0)
-
-    def switch_weapon(self, forward: bool, world=None):
-        if world is not None and self._scanner_only_mode(world):
-            self.inventory.set_weapon(0)
-            return
-
+    def switch_weapon(self, forward: bool):
         if forward:
             self.inventory.next_weapon()
         else:
             self.inventory.prev_weapon()
 
-    def select_weapon(self, index: int, world=None):
-        if world is not None and self._scanner_only_mode(world):
-            self.inventory.set_weapon(0)
-            return
-
+    def select_weapon(self, index: int):
         self.inventory.set_weapon(index)
 
-    def _check_enemy_collisions(self, enemies):
-        for enemy in enemies:
-            if self.rect.colliderect(enemy.rect):
-                self.get_damage(enemy.damage)
-
     def shot(self, camera_x: int, camera_y: int, world) -> None:
-        self._enforce_weapon_restriction(world)
         self.inventory.get_current().shot(self.pos, camera_x, camera_y, world)
 
     def ping(self, world):
@@ -68,13 +47,20 @@ class Player:
     def get_damage(self, damage=1):
         if self.invulnerable_timer <= 0: 
             self.hp -= damage
-            self.invulnerable_timer = 3.0
+            self.invulnerable_timer = cfg.INVULNERABLE_TIMER
 
     def up_score(self):
         self.score += 1
 
     def healling(self, amount=1):
         self.hp += amount
+
+    def upgrade(self):
+        self.inventory.get_all_weapons()
+        self.speed = cfg.PLAYER_HIGH_SPEED
+
+    def update_target(self, new_target_mes):
+        self.target_mes = new_target_mes
 
     def update(self, dt: float, world): 
         keys = pygame.key.get_pressed()
@@ -85,7 +71,9 @@ class Player:
         if keys[pygame.K_a] or keys[pygame.K_LEFT]: direction.x -= 1
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]: direction.x += 1
         
-        self._enforce_weapon_restriction(world)
+        if not world.enemies and self.target_mes == cfg.DESTROY_TARGET_MES:
+            self.update_target(cfg.ELEVATOR_TARGET_MES)
+
         self.inventory.update_all()
 
         self._movement(direction, dt, world.walls)
@@ -105,12 +93,16 @@ class Player:
         center_x = screen_x + self.rect.width // 2
         center_y = screen_y + self.rect.height // 2
         
-        # Центруем ее по хитбоксу 
         frame_rect = frame.get_rect(center=(center_x, center_y))
         
         surface.blit(frame, frame_rect)
 
         if self.invulnerable_timer > 0: self._draw_shield(surface, screen_x, screen_y)
+
+    def _check_enemy_collisions(self, enemies):
+        for enemy in enemies:
+            if self.rect.colliderect(enemy.rect):
+                self.get_damage(enemy.damage)
 
     def _movement(self, direction: pygame.math.Vector2, dt: float, walls: list):
         """ двигаем игрока:

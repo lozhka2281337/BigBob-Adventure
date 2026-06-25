@@ -1,13 +1,15 @@
 import pygame
 
 class AudioManager:
-    def __init__(self):
+    def __init__(self, game):
+        self.game = game
+
         pygame.mixer.init()
         
-    def play_bgm(self, file_path, loops=-1, volume=1):
+    def play_bgm(self, file_path, loops=-1):
         pygame.mixer.music.load(file_path)
-        pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(loops)
+        pygame.mixer.music.set_volume(self.game.volume/100)
 
     def queue_bgm(self, file_path):
         pygame.mixer.music.queue(file_path)

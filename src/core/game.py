@@ -34,19 +34,17 @@ class Game:
         self.menu = MainMenu(self, self.screen)
         self.camera = Camera(cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
         self.transition_manager = TransitionManager(self.screen, self.camera)
-        self.audio_manager = AudioManager()
-
-        self._new_game()
+        self.audio_manager = AudioManager(self)
 
     def run_terminal(self, script):
         self.terminal = Terminal(self.screen, self.player.score, script)
 
         if script == cfg.SCRIPT_WIN:
-            self.audio_manager.play_bgm(cfg.WIN_MUSIC)
+            self.audio_manager.play_bgm(cfg.WIN_MUSIC, 1)
         elif script == cfg.SCRIPT_LOSE: 
-            self.audio_manager.play_bgm(cfg.BOOM_SOUND)
+            self.audio_manager.play_bgm(cfg.BOOM_SOUND, 1)
             self.audio_manager.queue_bgm(cfg.INTRO_MUSIC)
-        else:
+        else: 
             self.audio_manager.play_bgm(cfg.INTRO_MUSIC)
 
         while self.running:
@@ -82,9 +80,11 @@ class Game:
             pygame.display.flip()
 
     def run_menu(self):
+        self.running = True
         self.audio_manager.play_bgm(cfg.MENU_MUSIC)
+        self._new_game()
 
-        while self.running:
+        while self.running: 
             dt = self.get_dt()
 
             self.handler.menu_process_events()
@@ -97,6 +97,7 @@ class Game:
         self.world.mod = cfg.NORMAL_MOD
         self.world.core_activated = True
         self.audio_manager.play_bgm(cfg.ACTION_MUSIC)
+        self.player.upgrade()
 
     def _has_alive_non_boss_enemies(self) -> bool:
         for enemy in self.world.enemies:
@@ -146,9 +147,6 @@ class Game:
             self._spawn_boss_in_arena()
             self.transition_manager.trigger_transition()
 
-    def get_dt(self):
-        return min(0.05, self.clock.tick(cfg.FPS) / 1000.0)
-
     def _new_game(self):
         self.world = World()
         self.dungeon_generator = BSP(self.world)
@@ -159,7 +157,7 @@ class Game:
         core_x, core_y = self.dungeon_generator.get_cyber_core_coord(player_x, player_y)
         
         self.cyber_core = CyberCore(core_x, core_y)
-        self.player = Player(player_x + 100, player_y)
+        self.player = Player(player_x, player_y)
         self.elevator = Elevator(player_x, player_y)
         self.world.start_room = self.dungeon_generator.find_room_by_point(player_x, player_y)
 
@@ -176,7 +174,7 @@ class Game:
         self.paused = False
 
     def _death_player(self):
-        self.run_terminal(cfg.SCRIPT_WIN)
+        self.run_terminal(cfg.SCRIPT_LOSE)
 
     def _update(self, dt: float):
         self.camera.update(dt)
@@ -195,6 +193,8 @@ class Game:
             enemy.update(self.world, self.player, dt)
         for ping in self.world.pings[:]:
             ping.update(self.world, self.player, dt)
+        for item in self.world.items[:]:
+            item.update(dt)
 
         self.player.process_weapon_damage(self.world.enemies, self.world.walls)
 
@@ -203,6 +203,10 @@ class Game:
             
             self.player.up_score()
             self.world.enemies.remove(enemy)
+            
+            if isinstance(enemy, Boss):
+                self.elevator.activate() 
+                self.player.update_target(cfg.ELEVATOR_TARGET_MES)
 
         self._update_level_progression()
 
@@ -215,12 +219,15 @@ class Game:
         if self.player.hp <= 0:
             self._death_player()
 
-        if (
-            self.elevator.check_trigger(self.player)
-            and self.world.mod != cfg.BOSS_MOD
-            and self.world.first_floor_exit_open
-        ):
+        if self.elevator.check_trigger(self.player) and \
+                self.world.mod != cfg.BOSS_MOD \
+                and self.world.first_floor_exit_open:
+            self.player.update_target(cfg.BOSS_TARGET_MES)
             self._start_second_level()
+
+        if self.elevator.check_trigger(self.player) and \
+            self.world.mod == cfg.BOSS_MOD:
+            self.run_terminal(cfg.SCRIPT_WIN)
 
     def _start_second_level(self):
         self.world.mod = cfg.BOSS_MOD
@@ -238,7 +245,7 @@ class Game:
         self.player.pos.y = center_y_px - self.player.rect.height // 2 + 15 * cfg.TILE_SIZE
         self.elevator.rect.x = self.player.pos.x
         self.elevator.rect.y = self.player.pos.y
-        self.elevator.is_active = False
+        self.elevator.disactivate()
 
         self.boss_arena.create_arena()
         self.spawner.spawn_second_floor_wave()
@@ -255,3 +262,6 @@ class Game:
             self.dark_renderer.draw(cam_x, cam_y)
         self.world_renderer.draw_interface()
         self.transition_manager.draw_flash() # отрисовка ослепления при переходе на активный режим
+
+    def get_dt(self):
+        return min(0.05, self.clock.tick(cfg.FPS) / 1000.0)

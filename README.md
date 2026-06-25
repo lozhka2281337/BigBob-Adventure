@@ -1,6 +1,6 @@
 ![Language](https://img.shields.io/badge/language-Python-blue.svg)
 
-# CYBER_PUC: 2067 
+# CYBER_PUK: 2067 
 
 ## 📁 Структура проекта
 ```text

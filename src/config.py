@@ -18,7 +18,7 @@ SPAWN_ENEMY_TIME = 1800
 title_font = pygame.font.SysFont("Courier New", 50, bold=True)
 menu_font = pygame.font.SysFont("Courier New", 24, bold=True)
 info_font = pygame.font.SysFont("Courier New", 20)
-font_terminal = pygame.font.SysFont("Courier New", 18, bold=True)
+terminal_font = pygame.font.SysFont("Courier New", 18, bold=True)
 arial_font = pygame.font.SysFont("Arial", 32, bold=True)
 none_font = pygame.font.SysFont(None, 32, bold=True)
 
@@ -62,12 +62,11 @@ SPLIT_BIG_LEAF_RELATIONSHIP = 0.25
 
 
 """ игрок """
-PLAYER_SPEED = 350
+PLAYER_LOW_SPEED = 250
+PLAYER_HIGH_SPEED = 350
 PLAYER_HP = 5
 PLAYER_SIZE = 32
-PLAYER_COLOR = (0, 255, 100)
-SHOT_DELAY = 300
-INVULNERABLE_TIMER = 3.0
+INVULNERABLE_TIMER = 1.0
 
 
 """ оружие """
@@ -82,7 +81,7 @@ ZIP_BOMB = "Zip-Bomb"
 PING_TIMER = 2.0 
 PING_COLOR = (0, 200, 255)
 PING_START_RADIUS = 10
-PING_MAX_RADIUS = 500 
+PING_MAX_RADIUS = 700 
 PING_SPEED = 450
 
 """ враги """
@@ -91,21 +90,18 @@ ENEMY_VISIBLE_TIME = 2.0 # время видимости после актива
 
 # 1. Swarm (Бегун)
 ENEMY_SWARM_HP = 50
-ENEMY_SWARM_SPEED = 250
-ENEMY_SWARM_COLOR = (0, 255, 0)
+ENEMY_SWARM_SPEED = 370
 ENEMY_SWARM_ATTACK_RANGE = 35
 
 # 2. Tank (Танк) 
 ENEMY_TANK_HP = 500
-ENEMY_TANK_SPEED = 150
-ENEMY_TANK_COLOR = (200, 0, 50) 
+ENEMY_TANK_SPEED = 200
 ENEMY_TANK_ATTACK_RANGE = 50    
 ENEMY_TANK_DAMAGE = 3      
 
 # 3. Shooter (Стрелок)
 ENEMY_SHOOTER_HP = 100
 ENEMY_SHOOTER_SPEED = 100
-ENEMY_SHOOTER_COLOR = (0, 255, 255)
 ENEMY_SHOOTER_ATTACK_RANGE = 250   
 ENEMY_SHOOTER_DAMAGE = 1
 SHOOTER_ADVANCE_DISTANCE = 50
@@ -213,6 +209,13 @@ BACK_BUTTON = "НАЗАД"
 CONTINUE_BUTTON = "ПРОДОЛЖИТЬ"
 
 
+""" цели игрока"""
+CORE_TARGET_MES = "найти ядро"
+DESTROY_TARGET_MES = "зачистить этаж"
+BOSS_TARGET_MES = "уничтожить булочку"
+ELEVATOR_TARGET_MES = "вернуться к лифту"
+
+
 """ скрипты для терминала """
 
 SCRIPT_INTRO = [
@@ -247,12 +250,14 @@ SCRIPT_WIN = [
     (">> ЗАМЕТКА ХАКЕРА: 'Они думали, что стерли тебя навсегда.'", "BLUE"),
     (">> ЗАМЕТКА ХАКЕРА: 'Выходи наружу. Пора показать им истинного Жнеца.'", "BLUE"),
     (">> --------------------------------------------------", "GREEN"),
-    (">> НАД ПРОЕКТОМ РАБОТАЛА КОМАНДА 'БУРМАЛДА':", "PURPLE"),
+    (">> НАД ПРОЕКТОМ РАБОТАЛИ", "PURPLE"),
     (">> СТУДЕНТЫ ПЕРВОГО КУРСА ГРУППЫ Б9125-01.03.02 сп 3/4", "PURPLE"),
     (">> ЖУКОВСКИЙ НИКОЛАЙ", "PURPLE"),
     (">> АЛЕКСАНДР НИКИШИН", "PURPLE"),
     (">> МИХАИЛ КУЗЬМИН", "PURPLE"),
-    (">> ШЕЙБЕКОВ АРСЛАН.", "PURPLE")
+    (">> ШЕЙБЕКОВ АРСЛАН.", "PURPLE"),
+    (">> --------------------------------------------------", "GREEN"),
+    (">> КОМАНДА 'БУРМАЛДА'", "GREEN")
 ]
 
 SCRIPT_LOSE = [

@@ -7,19 +7,8 @@ from .enemy import Enemy, EnemyState
 from projectile.grenade import Grenade
 from projectile.effects import SparkEffect
 from combat.damage import DamageSource, DamageType
-from config import (
-    BOSS_SIZE, BOSS_HP, BOSS_SPEED, BOSS_COLOR, BOSS_CONTACT_DAMAGE,
-    BOSS_BULLET_DAMAGE, BOSS_GRENADE_DAMAGE, BOSS_LASER_TICK_DAMAGE, BOSS_MELEE_DAMAGE,
-    BOSS_PHASE2_HP_RATIO, BOSS_PHASE3_HP_RATIO,
-    BOSS_ATTACK_COOLDOWN, BOSS_DASH_COOLDOWN, BOSS_DASH_SPEED, BOSS_DASH_DURATION,
-    BOSS_LASER_CHARGE_TIME, BOSS_LASER_FIRE_TIME, BOSS_LASER_DMG_INTERVAL,
-    BOSS_LASER_BEAM_WIDTH, BOSS_LASER_COLOR, BOSS_PHASE_COLOR,
-    BOSS_MELEE_DURATION, BOSS_MELEE_HIT_FRAC, BOSS_MELEE_REACH, BOSS_MELEE_ARC,
-    BOSS_SUMMON_DURATION,
-    BOSS_PREFERRED_MIN_DIST, BOSS_PREFERRED_MAX_DIST,
-    BOSS_GRENADE_SPEED, BOSS_GRENADE_BLAST_R, BOSS_GRENADE_FUSE, 
-    BOSS_GRENADE_MAX_RANGE, BOSS_GRENADE_COLOR
-)
+
+import config as cfg
 
 
 class BossPhase(Enum):
@@ -40,12 +29,12 @@ class BossState(Enum):
 
 class Boss(Enemy):
     def __init__(self, x: int, y: int, room: pygame.Rect):
-        super().__init__(x, y, BOSS_HP, BOSS_SPEED, BOSS_COLOR, room)
-        self.rect = pygame.Rect(x, y, BOSS_SIZE, BOSS_SIZE)
+        super().__init__(x, y, cfg.BOSS_HP, cfg.BOSS_SPEED, room)
+        self.rect = pygame.Rect(x, y, cfg.BOSS_SIZE, cfg.BOSS_SIZE)
         self.pos = pygame.math.Vector2(x, y)
 
-        self.max_hp = BOSS_HP
-        self.damage = BOSS_CONTACT_DAMAGE
+        self.max_hp = cfg.BOSS_HP
+        self.damage = cfg.BOSS_CONTACT_DAMAGE
         self.state = EnemyState.CHASE
 
         self.phase = BossPhase.PHASE1
@@ -87,22 +76,22 @@ class Boss(Enemy):
         if damage_type == DamageType.GRENADE:
             if source == DamageSource.BOSS:
                 return 0
-            return BOSS_GRENADE_DAMAGE
+            return cfg.BOSS_GRENADE_DAMAGE
 
         if damage_type == DamageType.LASER:
             now = pygame.time.get_ticks() / 1000.0
             if now - self.last_laser_hit_time < 0.25:
                 return 0
-            return BOSS_LASER_TICK_DAMAGE
+            return cfg.BOSS_LASER_TICK_DAMAGE
 
         if damage_type == DamageType.MELEE:
             now = pygame.time.get_ticks() / 1000.0
             if now - self.last_player_melee_hit_time < 0.25:
                 return 0
-            return BOSS_MELEE_DAMAGE
+            return cfg.BOSS_MELEE_DAMAGE
 
         if damage_type == DamageType.BULLET:
-            return min(damage, BOSS_BULLET_DAMAGE)
+            return min(damage, cfg.BOSS_BULLET_DAMAGE)
 
         return damage
 
@@ -126,7 +115,7 @@ class Boss(Enemy):
         self._cam_y = cam_y
 
         phase_n = self.phase.value
-        color = BOSS_PHASE_COLOR[phase_n]
+        color = cfg.BOSS_PHASE_COLOR[phase_n]
         offset = self.rect.move(-cam_x, -cam_y)
 
         inner = tuple(max(0, c // 3) for c in color)
@@ -154,16 +143,16 @@ class Boss(Enemy):
         phase_n = self.phase.value
         hp_ratio = self.hp / self.max_hp
 
-        if phase_n == 1 and hp_ratio < BOSS_PHASE2_HP_RATIO and not self.phase2_triggered:
+        if phase_n == 1 and hp_ratio < cfg.BOSS_PHASE2_HP_RATIO and not self.phase2_triggered:
             self.phase2_triggered = True
             self.phase = BossPhase.PHASE2
             self.boss_state = BossState.SUMMON
-            self.summon_timer = BOSS_SUMMON_DURATION
+            self.summon_timer = cfg.BOSS_SUMMON_DURATION
             self.summon_at_center = False
             self.minions_spawned = False
             self.is_invulnerable = False
 
-        elif phase_n == 2 and hp_ratio < BOSS_PHASE3_HP_RATIO and not self.phase3_triggered:
+        elif phase_n == 2 and hp_ratio < cfg.BOSS_PHASE3_HP_RATIO and not self.phase3_triggered:
             self.phase3_triggered = True
             self.phase = BossPhase.PHASE3
             self.attack_cooldown = 1.0
@@ -209,9 +198,9 @@ class Boss(Enemy):
 
         to_player_n = to_player.normalize()
 
-        if dist > BOSS_PREFERRED_MAX_DIST:
+        if dist > cfg.BOSS_PREFERRED_MAX_DIST:
             return to_player_n
-        if dist < BOSS_PREFERRED_MIN_DIST:
+        if dist < cfg.BOSS_PREFERRED_MIN_DIST:
             return -to_player_n
 
         strafe = pygame.math.Vector2(-to_player_n.y, to_player_n.x)
@@ -247,11 +236,11 @@ class Boss(Enemy):
             self.rect.centery,
             player.rect.centerx,
             player.rect.centery,
-            BOSS_GRENADE_SPEED,
-            BOSS_GRENADE_COLOR,
-            BOSS_GRENADE_BLAST_R,
-            BOSS_GRENADE_FUSE,
-            BOSS_GRENADE_MAX_RANGE,
+            cfg.BOSS_GRENADE_SPEED,
+            cfg.BOSS_GRENADE_COLOR,
+            cfg.BOSS_GRENADE_BLAST_R,
+            cfg.BOSS_GRENADE_FUSE,
+            cfg.BOSS_GRENADE_MAX_RANGE,
             owner="boss",
             damage=2
         )
@@ -272,7 +261,7 @@ class Boss(Enemy):
         self.melee_angle = math.degrees(math.atan2(to_player.y, to_player.x))
         self.melee_hit_done = False
         self.boss_state = BossState.ATTACK_MELEE
-        self.attack_timer = BOSS_MELEE_DURATION
+        self.attack_timer = cfg.BOSS_MELEE_DURATION
 
     def _tick_attack_melee(self, world, player, dt: float) -> None:
         to_p = self._vector_to_player(player)
@@ -281,7 +270,7 @@ class Boss(Enemy):
 
         self.attack_timer -= dt
 
-        if not self.melee_hit_done and self.attack_timer <= BOSS_MELEE_DURATION * (1 - BOSS_MELEE_HIT_FRAC):
+        if not self.melee_hit_done and self.attack_timer <= cfg.BOSS_MELEE_DURATION * (1 - cfg.BOSS_MELEE_HIT_FRAC):
             self.melee_hit_done = True
             self._apply_melee_damage(player)
 
@@ -293,34 +282,34 @@ class Boss(Enemy):
         player_center = pygame.math.Vector2(player.rect.center)
         dist = boss_center.distance_to(player_center)
 
-        if dist <= BOSS_MELEE_REACH + 16:
+        if dist <= cfg.BOSS_MELEE_REACH + 16:
             dx = player_center.x - boss_center.x
             dy = player_center.y - boss_center.y
             angle_to_player = math.degrees(math.atan2(dy, dx))
             angle_diff = (angle_to_player - self.melee_angle + 180) % 360 - 180
 
-            if abs(angle_diff) <= BOSS_MELEE_ARC / 2:
-                player.get_damage(BOSS_MELEE_DAMAGE)
+            if abs(angle_diff) <= cfg.BOSS_MELEE_ARC / 2:
+                player.get_damage(cfg.BOSS_MELEE_DAMAGE)
 
     def _enter_laser_charge(self, player) -> None:
         d = self._vector_to_player(player)
         self.laser_dir = d.normalize() if d.magnitude() > 0 else pygame.math.Vector2(1, 0)
         self.boss_state = BossState.ATTACK_LASER_CHARGE
-        self.attack_timer = BOSS_LASER_CHARGE_TIME
+        self.attack_timer = cfg.BOSS_LASER_CHARGE_TIME
         self.laser_dmg_timer = 0.0
 
     def _tick_laser_charge(self, world, player, dt: float) -> None:
         self.attack_timer -= dt
         if self.attack_timer <= 0:
             self.boss_state = BossState.ATTACK_LASER_FIRE
-            self.attack_timer = BOSS_LASER_FIRE_TIME[self.phase.value]
+            self.attack_timer = cfg.BOSS_LASER_FIRE_TIME[self.phase.value]
 
     def _tick_laser_fire(self, world, player, dt: float) -> None:
         self.attack_timer -= dt
         self.laser_dmg_timer -= dt
 
         if self.laser_dmg_timer <= 0:
-            self.laser_dmg_timer = BOSS_LASER_DMG_INTERVAL
+            self.laser_dmg_timer = cfg.BOSS_LASER_DMG_INTERVAL
             self._check_laser_player_damage(player)
 
         if self.attack_timer <= 0:
@@ -353,14 +342,14 @@ class Boss(Enemy):
         phase_n = self.phase.value
         d = self._vector_to_player(player)
         direction = d.normalize() if d.magnitude() > 0 else pygame.math.Vector2(1, 0)
-        self.dash_velocity = direction * BOSS_DASH_SPEED[phase_n]
+        self.dash_velocity = direction * cfg.BOSS_DASH_SPEED[phase_n]
         self.boss_state = BossState.DASH
-        self.dash_timer = BOSS_DASH_DURATION
+        self.dash_timer = cfg.BOSS_DASH_DURATION
 
     def _tick_dash(self, world, player, dt: float) -> None:
         phase_n = self.phase.value
         if random.random() < 0.4:
-            world.effects.append(SparkEffect(self.rect.centerx, self.rect.centery, BOSS_PHASE_COLOR[phase_n]))
+            world.effects.append(SparkEffect(self.rect.centerx, self.rect.centery, cfg.BOSS_PHASE_COLOR[phase_n]))
 
         self.move(world.walls, dt, self.dash_velocity.normalize())
         self.knockback = pygame.math.Vector2(self.dash_velocity.x, self.dash_velocity.y)
@@ -368,7 +357,7 @@ class Boss(Enemy):
         self.dash_timer -= dt
         if self.dash_timer <= 0:
             self.knockback = pygame.math.Vector2(0, 0)
-            self.dash_cooldown = BOSS_DASH_COOLDOWN[phase_n]
+            self.dash_cooldown = cfg.BOSS_DASH_COOLDOWN[phase_n]
             self.boss_state = BossState.CHASE_KITE
 
     def _tick_summon(self, world, dt: float) -> None:
@@ -415,7 +404,7 @@ class Boss(Enemy):
     def _reset_to_chase(self) -> None:
         phase_n = self.phase.value
         self.boss_state = BossState.CHASE_KITE
-        self.attack_cooldown = BOSS_ATTACK_COOLDOWN[phase_n]
+        self.attack_cooldown = cfg.BOSS_ATTACK_COOLDOWN[phase_n]
 
     def _draw_hp_bar(self, surface: pygame.Surface, offset_rect: pygame.Rect, color: tuple) -> None:
         bar_w = offset_rect.width
@@ -449,27 +438,27 @@ class Boss(Enemy):
         arc_surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
         center = (offset_rect.centerx, offset_rect.centery)
 
-        progress = 1.0 - max(0, self.attack_timer / BOSS_MELEE_DURATION)
+        progress = 1.0 - max(0, self.attack_timer / cfg.BOSS_MELEE_DURATION)
         alpha_val = int(220 * (1.0 - progress))
 
-        start_a = math.radians(self.melee_angle - BOSS_MELEE_ARC / 2)
-        end_a = math.radians(self.melee_angle + BOSS_MELEE_ARC / 2)
+        start_a = math.radians(self.melee_angle - cfg.BOSS_MELEE_ARC / 2)
+        end_a = math.radians(self.melee_angle + cfg.BOSS_MELEE_ARC / 2)
         points = [center]
         steps = 12
         for i in range(steps + 1):
             a = start_a + (end_a - start_a) * (i / steps)
-            px = center[0] + math.cos(a) * BOSS_MELEE_REACH
-            py = center[1] + math.sin(a) * BOSS_MELEE_REACH
+            px = center[0] + math.cos(a) * cfg.BOSS_MELEE_REACH
+            py = center[1] + math.sin(a) * cfg.BOSS_MELEE_REACH
             points.append((px, py))
 
-        phase_col = BOSS_PHASE_COLOR[self.phase.value]
+        phase_col = cfg.BOSS_PHASE_COLOR[self.phase.value]
         pygame.draw.polygon(arc_surf, (*phase_col, alpha_val // 3), points)
         pygame.draw.polygon(arc_surf, (*phase_col, alpha_val), points, 2)
         surface.blit(arc_surf, (0, 0))
 
     def _draw_laser_visual(self, surface: pygame.Surface, offset_rect: pygame.Rect, phase_n: int) -> None:
-        col = BOSS_LASER_COLOR[phase_n]
-        beam_w = BOSS_LASER_BEAM_WIDTH[phase_n]
+        col = cfg.BOSS_LASER_COLOR[phase_n]
+        beam_w = cfg.BOSS_LASER_BEAM_WIDTH[phase_n]
         start_s = (offset_rect.centerx, offset_rect.centery)
         start_w = pygame.math.Vector2(self.rect.center)
 

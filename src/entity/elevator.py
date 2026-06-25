@@ -13,6 +13,9 @@ class Elevator:
     def activate(self):
         self.is_active = True
 
+    def disactivate(self):
+        self.is_active = False
+
     def check_trigger(self, player) -> bool:
         if self.is_active and self.rect.colliderect(player.rect):
             return True

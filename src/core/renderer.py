@@ -28,6 +28,7 @@ class WorldRenderer:
     def draw_world(self, cam_x, cam_y):
         self.screen.fill(cfg.FLOOR_COLOR)
         self.screen.blit(self.map_surface, (-cam_x, -cam_y))
+        self.elevator.draw(self.screen, cam_x, cam_y)
 
         self._draw_weapon(cam_x, cam_y)
 
@@ -41,7 +42,6 @@ class WorldRenderer:
             grenade.draw(self.screen, cam_x, cam_y)
 
         if self.world.mod != cfg.BOSS_MOD: self.cyber_core.draw(self.screen, cam_x, cam_y)
-        self.elevator.draw(self.screen, cam_x, cam_y)
         self.player.draw(self.screen, cam_x, cam_y)
 
         for enemy in self.world.enemies:
@@ -54,6 +54,7 @@ class WorldRenderer:
     def draw_interface(self):
         self._draw_hp()
         self._draw_weapon_hud()
+        self._draw_player_target()
 
     def draw_death_screen(self):
         self.screen.fill((0, 0, 0))
@@ -74,6 +75,11 @@ class WorldRenderer:
 
         for wall in self.world.walls:
             self.map_surface.blit(self.wall_lvl1, (wall.x, wall.y))
+
+    def _draw_player_target(self):
+        message = f"цель: {self.player.target_mes}"
+        text_surf = cfg.arial_font.render(message, True, cfg.COLOR_NEON_GREEN)
+        self.screen.blit(text_surf, (10, 60))
 
     def _draw_hp(self):
         margin_x = 10  
@@ -97,7 +103,7 @@ class WorldRenderer:
             weapon = self.player.inventory.weapons[i]
             is_active = (i == self.player.inventory.current_idx)
 
-            y = start_y - (i * line_height)
+            y = start_y - (i * line_height) - 70
 
             if is_active:
                 text = f"> {i + 1}. {weapon.name}"
@@ -107,7 +113,7 @@ class WorldRenderer:
                 color = cfg.COLOR_NEON_BLUE
 
             text_surf = cfg.arial_font.render(text, True, color)
-            x = start_x - text_surf.get_width()
+            x = start_x - text_surf.get_width() - 20
 
             self.screen.blit(text_surf, (x, y))
 
@@ -167,7 +173,7 @@ class DarkRenderer:
             status_text = f"СКАНИРОВАНИЕ... {round(self.player.ping_timer * 10 / cfg.FPS, 2)}"
             text_color = (100, 100, 100)
 
-        self.screen.blit(cfg.none_font.render(status_text, True, text_color), (10, 60))
+        self.screen.blit(cfg.none_font.render(status_text, True, text_color), (10, 100))
 
     def _create_darkness_mask(self, width=cfg.SCREEN_WIDTH, height=cfg.SCREEN_HEIGHT, radius=cfg.DARKNESS_RADIUS) -> pygame.Surface:
         mask = pygame.Surface((width, height), pygame.SRCALPHA)

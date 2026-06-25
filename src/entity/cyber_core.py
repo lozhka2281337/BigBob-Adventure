@@ -32,7 +32,6 @@ class Particle:
 
         surface.blit(p_surf, (render_x, render_y))
 
-# ядро (цель игрока)
 class CyberCore:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 30, 30)
@@ -59,7 +58,6 @@ class CyberCore:
         return self.can_interact(player)
             
     def can_interact(self, player) -> bool:
-        # Раздуваем хитбокс ядра на 40 пикселей для зоны взаимодействия
         interaction_zone = self.rect.inflate(40, 40)
         return interaction_zone.colliderect(player)
 
@@ -90,7 +88,7 @@ class CyberCore:
 
         inner_rect = view_rect.inflate(-pulse // 2, -pulse // 2)
         pygame.draw.rect(surface, (0, 67, 74), inner_rect)
-        pygame.draw.rect(surface, (255, 255, 255), inner_rect, 2) # Белый контур
+        pygame.draw.rect(surface, (255, 255, 255), inner_rect, 2) 
 
     def _draw_orbital_dot(self, surface, cam_x, cam_y):
         angle = self.animation_timer * 2
