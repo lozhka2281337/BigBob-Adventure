@@ -74,5 +74,14 @@
 
 ---
 
+## Скринщоты
+
+<img width="1858" height="1039" alt="image" src="https://github.com/user-attachments/assets/fd046409-ab4e-41e1-a4fe-4af6bb665e0c" />
+<img width="1291" height="795" alt="image" src="https://github.com/user-attachments/assets/9a87c89f-4111-4ddd-893f-f62ecb1739f4" />
+<img width="1291" height="795" alt="image" src="https://github.com/user-attachments/assets/f75757b7-3e11-4d95-ba68-c40b97c000df" />
+
+
+---
+
 ## 📝 Лицензия
 Этот проект распространяется под лицензией MIT. 
